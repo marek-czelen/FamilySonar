@@ -1,77 +1,77 @@
 # FamilySonar
 
-Rodzinna aplikacja bezpieczeństwa na Androida, która pozwala udostępniać lokalizację zaufanym kontaktom przez SMS. Projekt powstał jako praktyczne portfolio pokazujące pracę z natywnym Androidem, cyklem życia usług działających w tle, uprawnieniami systemowymi oraz komunikacją opartą o SMS.
+Family safety application for Android that allows users to share their location with trusted contacts via SMS. The project was created as a practical portfolio demonstrating work with native Android, the lifecycle of background services, system permissions, and SMS-based communication.
 
-> **Status projektu:** działający prototyp portfolio, wersja `1.0`.
+> **Project status:** working portfolio prototype, version `1.0`.
 
-## Spis treści
+## Table of contents
 
-- [O projekcie](#o-projekcie)
-- [Najważniejsze funkcje](#najważniejsze-funkcje)
-- [Jak działa przepływ lokalizacji](#jak-działa-przepływ-lokalizacji)
-- [Technologie](#technologie)
-- [Uruchomienie](#uruchomienie)
-- [Testowanie na urządzeniu](#testowanie-na-urządzeniu)
-- [Uprawnienia i prywatność](#uprawnienia-i-prywatność)
-- [Struktura projektu](#struktura-projektu)
-- [Decyzje techniczne](#decyzje-techniczne)
-- [Ograniczenia i dalszy rozwój](#ograniczenia-i-dalszy-rozwój)
-- [Cel portfolio](#cel-portfolio)
+- [About the project](#about-the-project)
+- [Key features](#key-features)
+- [How the location flow works](#how-the-location-flow-works)
+- [Technologies](#technologies)
+- [Getting started](#getting-started)
+- [Testing on a device](#testing-on-a-device)
+- [Permissions and privacy](#permissions-and-privacy)
+- [Project structure](#project-structure)
+- [Technical decisions](#technical-decisions)
+- [Limitations and future development](#limitations-and-future-development)
+- [Portfolio purpose](#portfolio-purpose)
 
-## O projekcie
+## About the project
 
-FamilySonar jest aplikacją typu „trusted contacts”. Użytkownik zapisuje numery osób, którym ufa, a aplikacja może:
+FamilySonar is a "trusted contacts" application. The user saves the phone numbers of people they trust, and the application can:
 
-- wysłać wiadomość SOS zawierającą współrzędne ostatniej lokalizacji,
-- odpowiedzieć na autoryzowane żądanie lokalizacji wysłane SMS-em,
-- pobierać lokalizację GPS lub sieciową w tle,
-- przesłać współrzędne, adres oraz czas pomiaru do wskazanego kontaktu,
-- pokazać aktualny stan uprawnień i prowadzić użytkownika przez ich nadanie.
+- send an SOS message containing the coordinates of the last known location,
+- respond to an authorized location request sent by SMS,
+- retrieve GPS or network location in the background,
+- send the coordinates, address, and measurement time to a selected contact,
+- show the current permission status and guide the user through granting permissions.
 
-Aplikacja nie wymaga własnego backendu ani konta użytkownika. Wymiana danych odbywa się przez standardowe mechanizmy Androida i sieć operatora komórkowego.
+The application does not require its own backend or a user account. Data is exchanged through standard Android mechanisms and the mobile carrier network.
 
-## Najważniejsze funkcje
+## Key features
 
-### Kontakty zaufane
+### Trusted contacts
 
-- dodawanie numerów telefonów z poziomu interfejsu,
-- trwałe zapisywanie listy kontaktów w pamięci aplikacji,
-- usuwanie kontaktu gestem przesunięcia,
-- ręczne wysłanie żądania lokalizacji do wybranego numeru.
+- add phone numbers through the user interface,
+- persist the contact list in the application storage,
+- remove a contact with a swipe gesture,
+- manually send a location request to a selected number.
 
-### Lokalizacja w sytuacji alarmowej
+### Emergency location sharing
 
-- przycisk SOS wysyła do wszystkich zapisanych kontaktów bieżące współrzędne,
-- odbiorca może poprosić o lokalizację wiadomością `?loc?`,
-- żądania są akceptowane wyłącznie od numerów zapisanych jako zaufane,
-- odpowiedź zawiera czas pomiaru, współrzędne oraz adres uzyskany przez geokodowanie,
-- szybkie odświeżenie działa przez ograniczony czas, a następnie usługa wraca do trybu oszczędnego.
+- the SOS button sends the current coordinates to all saved contacts,
+- a recipient can request the location with the `?loc?` message,
+- requests are accepted only from numbers saved as trusted contacts,
+- the response contains the measurement time, coordinates, and the address obtained through geocoding,
+- rapid updates run for a limited time, after which the service returns to power-saving mode.
 
-### Praca w tle
+### Background operation
 
-- `LocationService` działa jako foreground service z widocznym powiadomieniem,
-- aplikacja reaguje na odebrane SMS-y przez `BroadcastReceiver`,
-- użytkownik otrzymuje skrót do ustawień optymalizacji baterii.
+- `LocationService` runs as a foreground service with a visible notification,
+- the application responds to received SMS messages through a `BroadcastReceiver`,
+- the user is provided with a shortcut to the battery optimization settings.
 
-## Jak działa przepływ lokalizacji
+## How the location flow works
 
 ```mermaid
 sequenceDiagram
-    participant Contact as Zaufany kontakt
-    participant SMS as Sieć SMS
+    participant Contact as Trusted contact
+    participant SMS as SMS network
     participant Receiver as SMSBroadcastReceiver
     participant Service as LocationService
-    participant Device as GPS / sieć
+    participant Device as GPS / network
 
     Contact->>SMS: SMS `?loc?`
     SMS->>Receiver: SMS_RECEIVED
-    Receiver->>Receiver: Sprawdzenie numeru na liście kontaktów
-    Receiver->>Service: Jednorazowe szybkie odświeżenie
-    Service->>Device: Pobranie lokalizacji
-    Device-->>Service: Współrzędne
-    Service->>Service: Geokodowanie adresu
-    Service->>SMS: Czas, współrzędne i adres
-    SMS-->>Contact: Odpowiedź SMS
+    Receiver->>Receiver: Check the number against the contact list
+    Receiver->>Service: One-time rapid update
+    Service->>Device: Retrieve location
+    Device-->>Service: Coordinates
+    Service->>Service: Geocode the address
+    Service->>SMS: Time, coordinates, and address
+    SMS-->>Contact: SMS response
 ```
 
 ## Technologie
@@ -85,27 +85,27 @@ sequenceDiagram
 - **ConstraintLayout 2.1.4**
 - **Navigation Component 2.7.7**
 - **Google Play Services Location 15.0.1**
-- `ViewBinding` oraz `RecyclerView`
+- `ViewBinding` and `RecyclerView`
 
-## Uruchomienie
+## Getting started
 
-### Wymagania
+### Requirements
 
-- Android Studio z obsługą Gradle 8.13,
-- JDK 17 lub nowsze,
-- Android SDK z platformą API 36,
-- urządzenie z Androidem 9+; do testów SMS potrzebna jest karta SIM i możliwość wysyłania/odbierania wiadomości.
+- Android Studio with Gradle 8.13 support,
+- JDK 17 or newer,
+- Android SDK with the API 36 platform,
+- a device running Android 9 or newer; SMS testing requires a SIM card and the ability to send and receive messages.
 
-### Klonowanie i synchronizacja
+### Cloning and synchronization
 
 ```powershell
 git clone https://github.com/marek-czelen/FamilySonar.git
 cd FamilySonar
 ```
 
-Otwórz katalog projektu w Android Studio i pozwól IDE zsynchronizować projekt z Gradle. W przypadku używania terminala upewnij się, że `JAVA_HOME` wskazuje na JDK 17+ oraz że `local.properties` zawiera ścieżkę do Android SDK.
+Open the project directory in Android Studio and let the IDE synchronize the project with Gradle. When using a terminal, make sure that `JAVA_HOME` points to JDK 17+ and that `local.properties` contains the path to the Android SDK.
 
-### Budowanie z terminala
+### Building from the terminal
 
 Windows PowerShell:
 
@@ -114,28 +114,28 @@ Windows PowerShell:
 ./gradlew.bat assembleRelease
 ```
 
-Artefakty APK zostaną zapisane w:
+APK artifacts will be saved to:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 app/build/outputs/apk/release/app-release.apk
 ```
 
-Wersja release korzysta obecnie z konfiguracji podpisywania debug, ponieważ repozytorium jest projektem portfolio, a nie procesem publikacji produkcyjnej.
+The release variant currently uses the debug signing configuration because this repository is a portfolio project rather than a production publishing process.
 
-## Testowanie na urządzeniu
+## Testing on a device
 
-Najpewniejszy scenariusz testowy wymaga dwóch telefonów lub telefonu i drugiego urządzenia z aktywnym numerem:
+The most reliable test scenario requires two phones, or a phone and another device with an active phone number:
 
-1. Zbuduj i zainstaluj wariant debug.
-2. Przy pierwszym uruchomieniu przyznaj uprawnienia do SMS, lokalizacji, powiadomień i lokalizacji w tle.
-3. Wyłącz optymalizację baterii dla FamilySonar.
-4. Dodaj numer testowego kontaktu zaufanego.
-5. Z drugiego telefonu wyślij `?loc?` na urządzenie z FamilySonar.
-6. Sprawdź, czy aplikacja pobierze lokalizację i odeśle trzy wiadomości: czas, współrzędne oraz adres.
-7. Przetestuj także przycisk SOS oraz ręczne żądanie lokalizacji z listy kontaktów.
+1. Build and install the debug variant.
+2. On first launch, grant SMS, location, notification, and background location permissions.
+3. Disable battery optimization for FamilySonar.
+4. Add the test number as a trusted contact.
+5. Send `?loc?` from the second phone to the device running FamilySonar.
+6. Check that the application retrieves the location and sends three messages in response: the time, coordinates, and address.
+7. Also test the SOS button and a manual location request from the contact list.
 
-Do szybkiego testu instalacji na podłączonym urządzeniu można użyć:
+For a quick installation test on a connected device, use:
 
 ```powershell
 ./gradlew.bat assembleDebug
@@ -143,73 +143,73 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell monkey -p com.familysonar 1
 ```
 
-Emulator jest przydatny do sprawdzania UI i cyklu życia aplikacji, ale nie zastępuje testu na fizycznym urządzeniu dla odbioru i wysyłania SMS oraz dokładności lokalizacji.
+An emulator is useful for checking the UI and application lifecycle, but it does not replace testing on a physical device for SMS delivery and location accuracy.
 
-## Uprawnienia i prywatność
+## Permissions and privacy
 
-Aplikacja korzysta z wrażliwych uprawnień, ponieważ są one niezbędne do realizacji jej funkcji:
+The application uses sensitive permissions because they are required for its functionality:
 
-| Uprawnienie | Zastosowanie |
+| Permission | Purpose |
 | --- | --- |
-| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Pobieranie lokalizacji GPS i sieciowej |
-| `ACCESS_BACKGROUND_LOCATION` | Aktualizacje lokalizacji poza ekranem aplikacji |
-| `RECEIVE_SMS` | Odbiór żądań `?loc?` |
-| `SEND_SMS` | Wysyłanie odpowiedzi lokalizacyjnych i SOS |
-| `FOREGROUND_SERVICE_LOCATION` | Stabilna praca usługi lokalizacyjnej w tle |
-| `POST_NOTIFICATIONS` | Widoczne powiadomienie usługi foreground |
-| `WAKE_LOCK` | Dokończenie krótkiej operacji lokalizacyjnej |
-| `INTERNET` | Geokodowanie współrzędnych na adres |
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Retrieve GPS and network location |
+| `ACCESS_BACKGROUND_LOCATION` | Location updates when the application is not on screen |
+| `RECEIVE_SMS` | Receive `?loc?` requests |
+| `SEND_SMS` | Send location and SOS responses |
+| `FOREGROUND_SERVICE_LOCATION` | Keep the location service running reliably in the background |
+| `POST_NOTIFICATIONS` | Display the foreground service notification |
+| `WAKE_LOCK` | Complete a short location operation |
+| `INTERNET` | Geocode coordinates into an address |
 
-Lista kontaktów jest zapisywana lokalnie w pliku danych aplikacji. Mechanizm autoryzacji żądań opiera się na porównaniu numeru nadawcy z zapisanymi kontaktami. Projekt nie zawiera serwera ani zewnętrznej bazy danych.
+The contact list is stored locally in the application's data file. Request authorization is based on comparing the sender's number with the saved contacts. The project does not contain a server or an external database.
 
-## Struktura projektu
+## Project structure
 
 ```text
 FamilySonar/
 ├── app/
 │   ├── src/main/java/com/familysonar/
-│   │   ├── MainActivity.java          # ekran główny i obsługa uprawnień
-│   │   ├── LocationService.java       # lokalizacja w foreground service
-│   │   ├── SMSBroadcastReceiver.java  # odbiór i weryfikacja żądań SMS
-│   │   ├── AlarmReceiverClass.java    # ręczne żądania lokalizacji
-│   │   ├── ConfigData.java            # lokalny zapis konfiguracji
-│   │   └── ContactsAdapter.java       # lista kontaktów w RecyclerView
-│   ├── src/main/res/                  # layouty, motywy, grafiki i nawigacja
+│   │   ├── MainActivity.java          # main screen and permission handling
+│   │   ├── LocationService.java       # location in a foreground service
+│   │   ├── SMSBroadcastReceiver.java  # receive and verify SMS requests
+│   │   ├── AlarmReceiverClass.java    # manual location requests
+│   │   ├── ConfigData.java            # local configuration storage
+│   │   └── ContactsAdapter.java       # contact list in RecyclerView
+│   ├── src/main/res/                  # layouts, themes, graphics, and navigation
 │   └── build.gradle
-├── gradle/libs.versions.toml         # centralne wersje zależności
+├── gradle/libs.versions.toml         # centralized dependency versions
 ├── gradlew / gradlew.bat             # wrapper Gradle
 └── settings.gradle
 ```
 
-## Decyzje techniczne
+## Technical decisions
 
-- **Foreground service zamiast ukrytego procesu:** Android wymaga jawnego sygnalizowania długotrwałej pracy związanej z lokalizacją. Powiadomienie informuje użytkownika, że usługa jest aktywna.
-- **Dwa źródła lokalizacji:** GPS daje lepszą dokładność na zewnątrz, a provider sieciowy zwiększa szansę na wynik w pomieszczeniach lub przy słabym sygnale GPS.
-- **Tryb oszczędny i szybki:** standardowy interwał wynosi 15 minut, natomiast żądanie kontaktu uruchamia szybkie odświeżenie co 10 sekund z limitem czasu.
-- **Autoryzacja numerem telefonu:** odebrane żądanie nie jest wykonywane dla nieznanego nadawcy.
-- **Brak backendu:** SMS upraszcza wdrożenie i pozwala działać bez konta oraz bez utrzymywania serwera, kosztem ograniczonej przepustowości i zależności od operatora.
+- **Foreground service instead of a hidden process:** Android requires long-running location work to be explicitly indicated. The notification informs the user that the service is active.
+- **Two location sources:** GPS provides better accuracy outdoors, while the network provider increases the chance of obtaining a result indoors or with a weak GPS signal.
+- **Power-saving and rapid modes:** the standard interval is 15 minutes, while a contact request starts rapid updates every 10 seconds for a limited time.
+- **Phone-number authorization:** a received request is not processed for an unknown sender.
+- **No backend:** SMS simplifies deployment and allows the application to work without an account or a maintained server, at the cost of limited throughput and dependence on the carrier.
 
-## Ograniczenia i dalszy rozwój
+## Limitations and future development
 
-Obecna wersja jest świadomie prototypem portfolio. Najważniejsze obszary dalszej pracy:
+The current version is intentionally a portfolio prototype. The main areas for future work are:
 
-- testy jednostkowe i testy instrumentacyjne dla przepływu uprawnień, odbioru SMS i obsługi błędów,
-- walidacja i normalizacja numerów telefonu z uwzględnieniem różnych formatów krajowych,
-- bezpieczniejsze przechowywanie danych kontaktów oraz bardziej szczegółowe ustawienia prywatności,
-- obsługa błędów wysyłania SMS, braku lokalizacji i wyłączonych providerów,
-- wydzielenie logiki lokalizacji i komunikacji z `Activity` do osobnych warstw,
-- konfiguracja podpisywania release oraz pipeline CI,
-- rozważenie powiadomień push lub backendu dla scenariuszy, w których SMS nie jest wystarczający.
+- unit and instrumentation tests for permission flows, SMS reception, and error handling,
+- validation and normalization of phone numbers across different country formats,
+- more secure contact data storage and more detailed privacy settings,
+- handling SMS sending errors, unavailable locations, and disabled providers,
+- moving location and communication logic out of the `Activity` into separate layers,
+- release signing configuration and a CI pipeline,
+- considering push notifications or a backend for scenarios where SMS is not sufficient.
 
-## Cel portfolio
+## Portfolio purpose
 
-Projekt prezentuje praktyczne umiejętności związane z:
+The project demonstrates practical skills related to:
 
-- projektowaniem aplikacji Android działającej poza pierwszym planem,
-- obsługą nowoczesnego modelu uprawnień Androida,
-- integracją GPS, geokodowania, SMS i powiadomień,
-- reagowaniem na zdarzenia systemowe przez `BroadcastReceiver`,
-- budowaniem prostego, odpornego przepływu komunikacji bez backendu,
-- świadomym opisywaniem kompromisów, ryzyk i kolejnych kroków rozwoju.
+- designing Android applications that operate outside the foreground,
+- working with Android's modern permission model,
+- integrating GPS, geocoding, SMS, and notifications,
+- responding to system events through a `BroadcastReceiver`,
+- building a simple and resilient communication flow without a backend,
+- consciously documenting trade-offs, risks, and future development steps.
 
-Projekt jest dobrym punktem wyjścia do rozmowy o architekturze Androida, ograniczeniach usług w tle, prywatności danych lokalizacyjnych oraz testowaniu funkcji zależnych od sprzętu.
+The project is a good starting point for discussing Android architecture, background service limitations, location data privacy, and testing hardware-dependent features.
