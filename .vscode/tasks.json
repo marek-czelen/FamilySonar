@@ -1,0 +1,163 @@
+{
+    "version": "2.0.0",
+    "inputs": [
+        {
+            "id": "avdName",
+            "type": "promptString",
+            "description": "Nazwa Android Virtual Device (AVD)",
+            "default": "Pixel_6_API_34"
+        }
+    ],
+    "tasks": [
+        {
+            "label": "FamilySonar: Clean",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat clean"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build debug",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat assembleDebug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build release",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat assembleRelease"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build APK debug",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat assembleDebug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build APK release",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat assembleRelease"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build AAB debug",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat bundleDebug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Build AAB release",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$env:JAVA_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } elseif (Test-Path 'C:\\Program Files\\Java\\openjdk\\bin\\java.exe') { 'C:\\Program Files\\Java\\openjdk' } elseif (Test-Path 'C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe') { 'C:\\Program Files\\Android\\Android Studio\\jbr' } else { throw 'Nie znaleziono JDK. Ustaw JAVA_HOME.' }; & .\\gradlew.bat bundleRelease"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gradle"
+            ]
+        },
+        {
+            "label": "FamilySonar: Start emulator",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$rawSdk = (Select-String -Path local.properties -Pattern '^sdk.dir=').Line -replace '^sdk.dir=', ''; $backslash = ([char]92).ToString(); $sdk = $rawSdk.Replace($backslash + ':', ':').Replace($backslash + $backslash, $backslash); & \"$sdk\\emulator\\emulator.exe\" -avd '${input:avdName}'"
+            ],
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "FamilySonar: Deploy to emulator",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$rawSdk = (Select-String -Path local.properties -Pattern '^sdk.dir=').Line -replace '^sdk.dir=', ''; $backslash = ([char]92).ToString(); $sdk = $rawSdk.Replace($backslash + ':', ':').Replace($backslash + $backslash, $backslash); $adb = \"$sdk\\platform-tools\\adb.exe\"; & $adb -e install -r \"$PWD\\app\\build\\outputs\\apk\\debug\\app-debug.apk\"; & $adb -e shell monkey -p com.familysonar 1"
+            ],
+            "dependsOn": "FamilySonar: Build debug",
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "FamilySonar: Deploy to device",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$rawSdk = (Select-String -Path local.properties -Pattern '^sdk.dir=').Line -replace '^sdk.dir=', ''; $backslash = ([char]92).ToString(); $sdk = $rawSdk.Replace($backslash + ':', ':').Replace($backslash + $backslash, $backslash); $adb = \"$sdk\\platform-tools\\adb.exe\"; & $adb -d uninstall com.familysonar; & $adb -d install -g --whitelist-restricted-permissions android.permission.RECEIVE_SMS,android.permission.SEND_SMS \"$PWD\\app\\build\\outputs\\apk\\debug\\app-debug.apk\"; & $adb -d shell monkey -p com.familysonar 1"
+            ],
+            "dependsOn": "FamilySonar: Build debug",
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+        ,
+        {
+            "label": "FamilySonar: Deploy release to device",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$rawSdk = (Select-String -Path local.properties -Pattern '^sdk.dir=').Line -replace '^sdk.dir=', ''; $backslash = ([char]92).ToString(); $sdk = $rawSdk.Replace($backslash + ':', ':').Replace($backslash + $backslash, $backslash); $adb = \"$sdk\\platform-tools\\adb.exe\"; & $adb -d uninstall com.familysonar; & $adb -d install -g --whitelist-restricted-permissions android.permission.RECEIVE_SMS,android.permission.SEND_SMS \"$PWD\\app\\build\\outputs\\apk\\release\\app-release.apk\"; & $adb -d shell monkey -p com.familysonar 1"
+            ],
+            "dependsOn": "FamilySonar: Build APK release",
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+    ]
+}
