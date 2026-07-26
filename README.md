@@ -1,215 +1,242 @@
-# FamilySonar
+# FamilySonar 📍
 
-Family safety application for Android that allows users to share their location with trusted contacts via SMS. The project was created as a practical portfolio demonstrating work with native Android, the lifecycle of background services, system permissions, and SMS-based communication.
+FamilySonar is a native Android portfolio prototype for sharing a device location with trusted contacts over SMS. It combines local contact management, runtime permission handling, GPS/network location updates, geocoding, foreground services, and emergency messaging without a custom backend or user account.
 
-> **Project status:** working portfolio prototype, version `1.0`.
+> **Status:** working portfolio prototype, version `1.0`.
 
-## Table of contents
+## 🧭 Overview
 
-- [About the project](#about-the-project)
-- [Key features](#key-features)
-- [How the location flow works](#how-the-location-flow-works)
-- [Technologies](#technologies)
-- [Getting started](#getting-started)
-- [Testing on a device](#testing-on-a-device)
-- [Permissions and privacy](#permissions-and-privacy)
-- [Project structure](#project-structure)
-- [Technical decisions](#technical-decisions)
-- [Limitations and future development](#limitations-and-future-development)
-- [Portfolio purpose](#portfolio-purpose)
+The application stores trusted phone numbers locally. A user can send an SOS message to every saved contact, request a location update for one contact, or allow an authorized contact to request the location by sending the exact `?loc?` SMS command.
 
-## About the project
+The active application is a single Android module built around one launcher `Activity`, system `BroadcastReceiver` components, a foreground `Service`, and local file storage. SMS delivery, carrier availability, device permissions, and location-provider state remain external dependencies.
 
-FamilySonar is a "trusted contacts" application. The user saves the phone numbers of people they trust, and the application can:
+## 🧰 Used Technologies
 
-- send an SOS message containing the coordinates of the last known location,
-- respond to an authorized location request sent by SMS,
-- retrieve GPS or network location in the background,
-- send the coordinates, address, and measurement time to a selected contact,
-- show the current permission status and guide the user through granting permissions.
+<p align="left">
+  <a href="https://www.java.com/"><img src="https://img.shields.io/badge/Java-8-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 8"></a>
+  <a href="https://developer.android.com/"><img src="https://img.shields.io/badge/Android-SDK%2036-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android SDK 36"></a>
+  <a href="https://gradle.org/"><img src="https://img.shields.io/badge/Gradle-8.13-02303A?style=for-the-badge&logo=gradle&logoColor=white" alt="Gradle 8.13"></a>
+  <a href="https://developer.android.com/jetpack/androidx"><img src="https://img.shields.io/badge/AndroidX-AppCompat%201.7.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="AndroidX AppCompat 1.7.0"></a>
+  <a href="https://m3.material.io/"><img src="https://img.shields.io/badge/Material%20Components-1.12.0-757575?style=for-the-badge&logo=materialdesign&logoColor=white" alt="Material Components 1.12.0"></a>
+  <a href="https://developers.google.com/android/guides/overview"><img src="https://img.shields.io/badge/Play%20services%20Location-15.0.1-4285F4?style=for-the-badge&logo=googleplay&logoColor=white" alt="Google Play services Location 15.0.1"></a>
+</p>
 
-The application does not require its own backend or a user account. Data is exchanged through standard Android mechanisms and the mobile carrier network.
+## ✨ Key Features
 
-## Key features
+- **Trusted contacts:** add phone numbers, persist them locally, remove them with a swipe gesture, and display them in a `RecyclerView`.
+- **Manual location requests:** start a one-time request for a selected contact from the contact list.
+- **SMS location requests:** accept the exact `?loc?` command only when the sender's number matches a saved contact.
+- **Emergency SOS:** send the last location returned by the fused location provider to all saved contacts.
+- **GPS and network location:** use Android `LocationManager` providers, with GPS preferred when a recent GPS fix is available.
+- **Location response:** send the measurement time, coordinates, and a geocoded address as separate SMS messages for an authorized request.
+- **Foreground location service:** expose ongoing location work through an Android notification and use slower and faster refresh intervals.
+- **Permission guidance:** request SMS, foreground/background location, and notification permissions in sequence and show their current status in the UI.
+- **Battery settings shortcut:** open Android battery-saver settings from the main screen.
 
-### Trusted contacts
+## 🏛️ Architecture
 
-- add phone numbers through the user interface,
-- persist the contact list in the application storage,
-- remove a contact with a swipe gesture,
-- manually send a location request to a selected number.
+FamilySonar uses a small, event-driven native Android architecture rather than a multi-layer or backend-based design:
 
-### Emergency location sharing
+| Layer | Responsibility | Main implementation |
+| --- | --- | --- |
+| Presentation | Main screen, permission status, contact list, SOS action, and location display | `MainActivity`, XML layouts, `ContactsAdapter` |
+| Local data | Serialize and restore trusted contacts from app-private storage | `ConfigData`, `Contact`, `ContactList` |
+| System events | Receive SMS broadcasts and schedule manual contact requests | `SMSBroadcastReceiver`, `AlarmReceiverClass` |
+| Background work | Obtain location, geocode it, broadcast updates, and send SMS responses | `LocationService` |
+| Platform integration | Runtime permissions, notification channel, wake locks, `SmsManager`, `LocationManager`, and `Geocoder` | Android SDK and Google Play services Location |
 
-- the SOS button sends the current coordinates to all saved contacts,
-- a recipient can request the location with the `?loc?` message,
-- requests are accepted only from numbers saved as trusted contacts,
-- the response contains the measurement time, coordinates, and the address obtained through geocoding,
-- rapid updates run for a limited time, after which the service returns to power-saving mode.
+The repository contains one `app` module. The main screen is implemented directly in `MainActivity`; the Navigation Component dependency and navigation resource are present, but the current launcher flow does not use a navigation host or feature fragments.
 
-### Background operation
+## 🧩 Core Modules
 
-- `LocationService` runs as a foreground service with a visible notification,
-- the application responds to received SMS messages through a `BroadcastReceiver`,
-- the user is provided with a shortcut to the battery optimization settings.
+| Module | Role |
+| --- | --- |
+| [`MainActivity`](app/src/main/java/com/familysonar/MainActivity.java) | Initializes the UI, loads contacts, manages runtime permissions, handles contact changes, opens battery settings, refreshes displayed location data, and sends SOS messages. |
+| [`LocationService`](app/src/main/java/com/familysonar/LocationService.java) | Runs as a location foreground service, reads GPS/network updates, maintains the current fix, geocodes the location, notifies the Activity, and sends authorized request responses. |
+| [`SMSBroadcastReceiver`](app/src/main/java/com/familysonar/SMSBroadcastReceiver.java) | Reads incoming SMS PDUs, matches the exact `?loc?` command and sender number, then starts a short fast-refresh request. |
+| [`AlarmReceiverClass`](app/src/main/java/com/familysonar/AlarmReceiverClass.java) | Handles the manual contact-list request, sends a `START` message, and returns the last or next available location coordinate. |
+| [`ContactsAdapter`](app/src/main/java/com/familysonar/ContactsAdapter.java) | Binds saved phone numbers to the `RecyclerView` and exposes the per-contact location action. |
+| [`ConfigData`](app/src/main/java/com/familysonar/ConfigData.java) | Stores `ContactList` in the app's private files directory as `configdata.dat`. |
+| [`JobService`](app/src/main/java/com/familysonar/JobService.java) | Contains an alternate cell-information SMS response path; the active SMS receiver starts `LocationService` instead of scheduling this job. |
 
-## How the location flow works
+`BootCompleteReceiverClass` is present as a Java class, but it is not registered in the current manifest and therefore is not documented as an active boot-start feature.
+
+## 🔄 Data Flow
+
+### Authorized SMS request
 
 ```mermaid
 sequenceDiagram
     participant Contact as Trusted contact
-    participant SMS as SMS network
+    participant Carrier as SMS carrier
     participant Receiver as SMSBroadcastReceiver
+    participant Storage as ConfigData
     participant Service as LocationService
-    participant Device as GPS / network
+    participant Device as GPS or network provider
+    participant Geocoder as Android Geocoder
 
-    Contact->>SMS: SMS `?loc?`
-    SMS->>Receiver: SMS_RECEIVED
-    Receiver->>Receiver: Check the number against the contact list
-    Receiver->>Service: One-time rapid update
-    Service->>Device: Retrieve location
-    Device-->>Service: Coordinates
-    Service->>Service: Geocode the address
-    Service->>SMS: Time, coordinates, and address
-    SMS-->>Contact: SMS response
+    Contact->>Carrier: Send ?loc?
+    Carrier->>Receiver: SMS_RECEIVED
+    Receiver->>Storage: Load saved phone numbers
+    alt Exact command and trusted sender
+        Receiver->>Service: Start fast request
+        Service->>Device: Request one location update
+        Device-->>Service: Coordinates and timestamp
+        Service->>Geocoder: Resolve address
+        Service->>Contact: Send time, coordinates, and address
+    else Unknown sender or different message
+        Receiver-->>Contact: Ignore request
+    end
 ```
 
-## Technologie
+The foreground service uses a 15-minute standard interval and a 10-second fast interval. A fast SMS request is configured for one location update and has a 30-second timeout response when no update is obtained.
 
-- **Java 8** i natywne **Android SDK**
-- **Android Gradle Plugin 8.13.0**
-- **Gradle 8.13 Wrapper**
-- **compileSdk 36**, **targetSdk 34**, **minSdk 28** (Android 9)
-- **AndroidX AppCompat**
-- **Material Components 1.12.0**
-- **ConstraintLayout 2.1.4**
-- **Navigation Component 2.7.7**
-- **Google Play Services Location 15.0.1**
-- `ViewBinding` and `RecyclerView`
+### Local manual request and SOS
 
-## Getting started
+- A contact-row action schedules `AlarmReceiverClass`, which sends `START` and then sends one coordinate response using the fused last location or a provider update.
+- The SOS action reads the fused last location and sends one emergency SMS to each saved contact.
+- There is no public HTTP API, application server, external database, or account system in this repository.
+
+## 🛠️ Technology Stack
+
+| Area | Technologies and configuration |
+| --- | --- |
+| Language | Java with source and target compatibility set to Java 8 |
+| Android build | Android Gradle Plugin `8.13.0`, Gradle Wrapper `8.13`, `compileSdk 36`, `targetSdk 34`, `minSdk 28` |
+| UI | Android XML layouts, AndroidX AppCompat `1.7.0`, Material Components `1.12.0`, ConstraintLayout `2.1.4`, RecyclerView, and `ItemTouchHelper` |
+| Navigation dependencies | AndroidX Navigation Fragment/UI `2.7.7`; a navigation resource is included but is not connected to the current single-Activity screen |
+| Location | Google Play services Location `15.0.1`, Android `LocationManager`, GPS, network provider, and `Geocoder` |
+| Communication | Android `SmsManager`, `BroadcastReceiver`, `AlarmManager`, and foreground `Service` |
+| Testing | JUnit `4.13.2` and AndroidX Test JUnit `1.1.5`; Espresso Core `3.5.1` is defined in the version catalog but is not wired into `app/build.gradle` |
+
+Dependency versions are centralized in [`gradle/libs.versions.toml`](gradle/libs.versions.toml), and the Android module configuration is in [`app/build.gradle`](app/build.gradle).
+
+## 🚀 Getting Started
 
 ### Requirements
 
-- Android Studio with Gradle 8.13 support,
-- JDK 17 or newer,
-- Android SDK with the API 36 platform,
-- a device running Android 9 or newer; SMS testing requires a SIM card and the ability to send and receive messages.
+- Android Studio with Android SDK platform API 36 installed.
+- JDK 17 or newer. The workspace build task also supports the detected Android Studio JDK.
+- A physical Android device running Android 9/API 28 or newer for meaningful SMS and location testing.
+- A SIM-enabled device and a second phone for testing SMS request and SOS flows.
 
-### Cloning and synchronization
+### Clone and open
 
 ```powershell
 git clone https://github.com/marek-czelen/FamilySonar.git
 cd FamilySonar
 ```
 
-Open the project directory in Android Studio and let the IDE synchronize the project with Gradle. When using a terminal, make sure that `JAVA_HOME` points to JDK 17+ and that `local.properties` contains the path to the Android SDK.
+Open the project in Android Studio and synchronize it with Gradle. Set `JAVA_HOME` to a JDK 17+ installation if Android Studio or the terminal cannot detect one. Android Studio will normally create the machine-specific `local.properties` file containing the Android SDK path; it should not be committed.
 
-### Building from the terminal
-
-Windows PowerShell:
+### Build from PowerShell
 
 ```powershell
-./gradlew.bat assembleDebug
-./gradlew.bat assembleRelease
+.\gradlew.bat assembleDebug
+.\gradlew.bat assembleRelease
 ```
 
-APK artifacts will be saved to:
+The generated APK files are written to:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 app/build/outputs/apk/release/app-release.apk
 ```
 
-The release variant currently uses the debug signing configuration because this repository is a portfolio project rather than a production publishing process.
+The release build currently uses the debug signing configuration and has code shrinking disabled. It is suitable for development and portfolio review, not for a production publishing pipeline.
 
-## Testing on a device
-
-The most reliable test scenario requires two phones, or a phone and another device with an active phone number:
-
-1. Build and install the debug variant.
-2. On first launch, grant SMS, location, notification, and background location permissions.
-3. Disable battery optimization for FamilySonar.
-4. Add the test number as a trusted contact.
-5. Send `?loc?` from the second phone to the device running FamilySonar.
-6. Check that the application retrieves the location and sends three messages in response: the time, coordinates, and address.
-7. Also test the SOS button and a manual location request from the contact list.
-
-For a quick installation test on a connected device, use:
+### Install on a connected device
 
 ```powershell
-./gradlew.bat assembleDebug
+.\gradlew.bat assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell monkey -p com.familysonar 1
 ```
 
-An emulator is useful for checking the UI and application lifecycle, but it does not replace testing on a physical device for SMS delivery and location accuracy.
+On first launch, grant the requested SMS, foreground/background location, and notification permissions. Use the in-app battery settings shortcut when the device restricts background work.
 
-## Permissions and privacy
+## 🔐 Security Considerations
 
-The application uses sensitive permissions because they are required for its functionality:
+### Implemented protections
 
-| Permission | Purpose |
-| --- | --- |
-| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Retrieve GPS and network location |
-| `ACCESS_BACKGROUND_LOCATION` | Location updates when the application is not on screen |
-| `RECEIVE_SMS` | Receive `?loc?` requests |
-| `SEND_SMS` | Send location and SOS responses |
-| `FOREGROUND_SERVICE_LOCATION` | Keep the location service running reliably in the background |
-| `POST_NOTIFICATIONS` | Display the foreground service notification |
-| `WAKE_LOCK` | Complete a short location operation |
-| `INTERNET` | Geocode coordinates into an address |
+- Runtime permission checks cover SMS, fine/coarse location, background location, and notifications; foreground location service permissions are declared in the manifest.
+- Incoming location requests are accepted only for the exact `?loc?` command and an exact phone-number match in the saved contact list.
+- Contacts are stored in the application's private files directory rather than in a shared external location.
+- Location work is visible through a foreground-service notification.
 
-The contact list is stored locally in the application's data file. Request authorization is based on comparing the sender's number with the saved contacts. The project does not contain a server or an external database.
+### Limitations to address before production use
 
-## Project structure
+- `configdata.dat` is Java-serialized local data and is not encrypted. The manifest enables Android backup, while the repository's backup rules do not exclude this file; privacy-sensitive contact data should be reviewed before distribution.
+- SMS and location data are sensitive. The request protocol has no cryptographic authentication or message encryption, and authorization depends on the sender address supplied by the telephony stack.
+- Phone numbers are compared as raw strings. International formatting, normalization, duplicates, and spoofing or carrier-specific sender formats are not handled.
+- SMS send failures, unavailable providers, missing last locations, and some permission/error paths are not surfaced through a complete user-facing error model.
+- The release variant uses the debug key. A production release would need a protected signing key, explicit backup policy, privacy documentation, and a tested release process.
+
+## 🧪 Testing
+
+The repository contains two example tests:
+
+- [`ExampleUnitTest`](app/src/test/java/com/familysonar/ExampleUnitTest.java) verifies a basic local JUnit assertion.
+- [`ExampleInstrumentedTest`](app/src/androidTest/java/com/familysonar/ExampleInstrumentedTest.java) verifies the application package name on an Android device.
+
+Run the local unit-test task with:
+
+```powershell
+.\gradlew.bat testDebugUnitTest
+```
+
+Feature-specific tests for permissions, SMS reception, location providers, geocoding, contact persistence, and failure handling are not implemented yet. Instrumented tests require a connected device or emulator and are not a substitute for physical-device SMS testing.
+
+## 📁 Project Structure
 
 ```text
 FamilySonar/
 ├── app/
 │   ├── src/main/java/com/familysonar/
-│   │   ├── MainActivity.java          # main screen and permission handling
-│   │   ├── LocationService.java       # location in a foreground service
-│   │   ├── SMSBroadcastReceiver.java  # receive and verify SMS requests
-│   │   ├── AlarmReceiverClass.java    # manual location requests
-│   │   ├── ConfigData.java            # local configuration storage
-│   │   └── ContactsAdapter.java       # contact list in RecyclerView
-│   ├── src/main/res/                  # layouts, themes, graphics, and navigation
+│   │   ├── MainActivity.java
+│   │   ├── LocationService.java
+│   │   ├── SMSBroadcastReceiver.java
+│   │   ├── AlarmReceiverClass.java
+│   │   ├── ConfigData.java
+│   │   ├── Contact.java / ContactList.java
+│   │   └── ContactsAdapter.java
+│   ├── src/main/res/          # XML layouts, themes, icons, and supporting resources
+│   ├── src/test/              # local unit test
+│   ├── src/androidTest/       # instrumented Android test
 │   └── build.gradle
-├── gradle/libs.versions.toml         # centralized dependency versions
-├── gradlew / gradlew.bat             # wrapper Gradle
-└── settings.gradle
+├── gradle/libs.versions.toml  # centralized dependency versions
+├── gradlew / gradlew.bat      # Gradle Wrapper scripts
+├── settings.gradle
+└── README.md
 ```
 
-## Technical decisions
+## 📌 Project Status & Future Improvements
 
-- **Foreground service instead of a hidden process:** Android requires long-running location work to be explicitly indicated. The notification informs the user that the service is active.
-- **Two location sources:** GPS provides better accuracy outdoors, while the network provider increases the chance of obtaining a result indoors or with a weak GPS signal.
-- **Power-saving and rapid modes:** the standard interval is 15 minutes, while a contact request starts rapid updates every 10 seconds for a limited time.
-- **Phone-number authorization:** a received request is not processed for an unknown sender.
-- **No backend:** SMS simplifies deployment and allows the application to work without an account or a maintained server, at the cost of limited throughput and dependence on the carrier.
+**Current status:** working portfolio prototype, version `1.0`. The debug build and local unit-test task complete successfully in the current development environment. No production deployment or release distribution is configured in the repository.
 
-## Limitations and future development
+Potential next steps based on the current implementation:
 
-The current version is intentionally a portfolio prototype. The main areas for future work are:
+- Add feature-level unit and instrumentation coverage for permission, SMS, service, persistence, and error flows.
+- Normalize and validate phone numbers before saving and comparing them.
+- Replace plain Java serialization with a safer, encrypted storage strategy and define explicit backup exclusions.
+- Improve handling and user feedback for null locations, provider failures, SMS failures, and denied permissions.
+- Separate UI, location, SMS, and persistence responsibilities into clearer layers.
+- Configure production signing, CI checks, and a documented release process.
+- Evaluate a signed request protocol or a backend/push-based channel for use cases where SMS is insufficient.
 
-- unit and instrumentation tests for permission flows, SMS reception, and error handling,
-- validation and normalization of phone numbers across different country formats,
-- more secure contact data storage and more detailed privacy settings,
-- handling SMS sending errors, unavailable locations, and disabled providers,
-- moving location and communication logic out of the `Activity` into separate layers,
-- release signing configuration and a CI pipeline,
-- considering push notifications or a backend for scenarios where SMS is not sufficient.
+## 🤝 Contributing
 
-## Portfolio purpose
+Contributions that improve reliability, privacy, accessibility, or device compatibility are welcome:
 
-The project demonstrates practical skills related to:
+1. Fork the repository and create a focused feature or fix branch.
+2. Keep changes scoped and document any Android-version or device-specific behavior.
+3. Run `assembleDebug` and `testDebugUnitTest` before opening a pull request.
+4. Describe the tested device/API level and any SMS or location prerequisites.
 
-- designing Android applications that operate outside the foreground,
-- working with Android's modern permission model,
-- integrating GPS, geocoding, SMS, and notifications,
-- responding to system events through a `BroadcastReceiver`,
-- building a simple and resilient communication flow without a backend,
-- consciously documenting trade-offs, risks, and future development steps.
+## 👤 Author
 
-The project is a good starting point for discussing Android architecture, background service limitations, location data privacy, and testing hardware-dependent features.
+**Marek** · [marek-czelen](https://github.com/marek-czelen)
+
+### 💼 Portfolio Project
+
+FamilySonar is a practical portfolio project demonstrating native Android development, background execution, runtime permissions, location services, SMS communication, and honest documentation of security and hardware-dependent limitations. It should be treated as a learning and review artifact rather than a production safety service.
