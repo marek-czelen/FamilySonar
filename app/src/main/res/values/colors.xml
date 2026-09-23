@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="backgroundColor">#E8E8E0</color>
-    <color name="backgroundColorPress">#DBDBD3</color>
-    <color name="red">#FF3B00</color>
-    <color name="red_press">#990000</color>
-    <color name="dark_gray">#4C535B</color>
-    <color name="dark_gray_press">#ff7e8a97</color>
+    <color name="backgroundColor">#F5F7FB</color>
+    <color name="backgroundColorPress">#E8EEF7</color>
+    <color name="red">#C83B4A</color>
+    <color name="red_press">#A82D3B</color>
+    <color name="dark_gray">#D9E2EC</color>
+    <color name="dark_gray_press">#B8C7D8</color>
+    <color name="safe_background">#F5F7FB</color>
+    <color name="safe_on_background">#102033</color>
+    <color name="safe_surface">#FFFFFF</color>
+    <color name="safe_on_surface">#102033</color>
+    <color name="safe_muted">#617286</color>
+    <color name="safe_outline">#D9E2EC</color>
+    <color name="safe_primary">#295FEF</color>
+    <color name="safe_on_primary">#FFFFFF</color>
+    <color name="safe_primary_container">#EAF0FF</color>
+    <color name="safe_on_primary_container">#123A9A</color>
+    <color name="safe_secondary">#0C9E8A</color>
+    <color name="safe_on_secondary">#FFFFFF</color>
+    <color name="safe_secondary_container">#DDF8F1</color>
+    <color name="safe_on_secondary_container">#075C52</color>
+    <color name="safe_surface_variant">#EEF3F8</color>
+    <color name="safe_info_background">#EBF2FF</color>
+    <color name="safe_error_background">#FDECEF</color>
+    <color name="safe_error">#C83B4A</color>
+    <color name="ic_launcher_background">#295FEF</color>
 </resources>

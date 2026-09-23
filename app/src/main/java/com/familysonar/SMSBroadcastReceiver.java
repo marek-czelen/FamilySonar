@@ -43,33 +43,46 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
                 throw new RuntimeException(e);
             }
 
-            for (int i = 0; i < smsArray.length; i++) {
-                SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsArray[i], format);
-                if (sms.getMessageBody().compareTo("?loc?")!=0) continue;
-                for (Contact c : config.getContactList()) {
-                    String from = sms.getOriginatingAddress();
-                    if (PhoneNumberUtils.compare(from, c.getPhone())) {
-                        //scheduleJob(context, sms);
-                        //AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-                        //Intent alarmIntent = new Intent(context,AlarmReceiverClass.class);
-                        //alarmIntent.putExtra("from",sms.getOriginatingAddress());
-                        //PendingIntent pendingIntent = PendingIntent.getBroadcast(context,0,alarmIntent,PendingIntent.FLAG_IMMUTABLE);
-                        //long timeInMilis = Calendar.getInstance().getTimeInMillis()+5000;
-                        //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,timeInMilis,0,pendingIntent);
-                        //Log.d("FalimySonarApp", "onAlamschedule");
-                        Intent locationIntent = new Intent(context, LocationService.class);
-                        locationIntent.setAction(LocationService.LOCATION_CHANGE_REFRESH);
-                        locationIntent.putExtra("refresh_s", LocationService.LocationFastRefreshPeridSeconds);
-                        locationIntent.putExtra("refreshCounts", 1);
-                        locationIntent.putExtra("sendLocationFastEnd",true);
-                        locationIntent.putExtra("from",from);
-                        ContextCompat.startForegroundService(context, locationIntent);
-                    }
+            StringBuilder messageBody = new StringBuilder();
+            String from = null;
+            for (Object pdu : smsArray) {
+                SmsMessage sms = SmsMessage.createFromPdu((byte[]) pdu, format);
+                if (sms == null) {
+                    continue;
                 }
+                if (from == null) {
+                    from = sms.getOriginatingAddress();
+                }
+                if (sms.getMessageBody() != null) {
+                    messageBody.append(sms.getMessageBody());
+                }
+            }
+            if (from == null) {
+                return;
+            }
 
+            String command = messageBody.toString();
+            boolean emergencyRequest = command.startsWith("?loc?")
+                    && EmergencyPasswordStore.matches(context, command.substring(5));
+            boolean trustedRequest = "?loc?".equals(command)
+                    && isTrustedContact(from, config);
+            if (emergencyRequest || trustedRequest) {
+                Intent locationIntent = new Intent(context, LocationService.class);
+                locationIntent.setAction(LocationService.ACTION_REQUEST_LOCATION_FOR_SMS);
+                locationIntent.putExtra(LocationService.EXTRA_LOCATION_DESTINATION, from);
+                ContextCompat.startForegroundService(context, locationIntent);
             }
         }
 
+    }
+
+    private boolean isTrustedContact(String from, ConfigData config) {
+        for (Contact contact : config.getContactList()) {
+            if (PhoneNumberUtils.compare(from, contact.getPhone())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)

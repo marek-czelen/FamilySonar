@@ -1,11 +1,49 @@
 <resources>
     <string name="app_name">FamilySonar</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Ustawienia</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="unknown_sender">Unknown sender</string>
+    <string name="attachment_selected">Attachment selected</string>
+    <string name="sms_mode">SMS</string>
+    <string name="mms_limited_title">MMS attachments</string>
+    <string name="mms_limited_message">This app supports sending image attachments as MMS. Availability and limits depend on your carrier and device.</string>
+    <string name="sms_mms_scope_banner">SMS messages and image MMS attachments are supported.</string>
+    <string name="back">Back</string>
+    <string name="emoji_button">Emoji</string>
+    <string name="attachment_button">Add image attachment</string>
+    <string name="message_hint">Type a message</string>
+    <string name="send_message">Send message</string>
+    <string name="add_contact">Add contact</string>
+    <string name="sos_button_description">Send emergency message</string>
+    <string name="messages_channel">Messages</string>
+    <string name="incoming_mms">Incoming MMS</string>
+    <string name="mms_download_size_limit">The MMS is too large to download.</string>
+    <string name="mms_download_network_failed">The MMS download failed because of a network problem.</string>
+    <string name="mms_download_not_supported">MMS downloads are not supported by this device.</string>
+    <string name="mms_download_missing_location">The MMS download did not provide a valid location.</string>
+    <string name="mms_download_failed">The MMS download failed.</string>
+    <string name="default_sms_title">Default SMS app required</string>
+    <string name="default_sms_required">Set FamilySonar as the default SMS app to send and receive messages.</string>
+    <string name="open_default_sms_settings">Open SMS settings</string>
+    <string name="default_sms_permission_missing">SMS permission is missing.</string>
+    <string name="address_required">A phone number and message are required.</string>
+    <string name="mms_send_failed">The MMS could not be sent.</string>
+    <string name="mms_image_only">Only image attachments can be sent as MMS.</string>
+    <string name="mms_attachment_too_large">The image attachment is too large.</string>
+    <string name="mms_attachment_read_failed">The image attachment could not be read.</string>
+    <string name="location_permission_required">Location permission is required.</string>
+    <string name="location_request_failed">The location request failed.</string>
+    <string name="choose_contact_from_phonebook">Choose from phonebook</string>
+    <string name="enter_phone_number">Enter phone number</string>
+    <string name="choose_contact">Add trusted contact</string>
+    <string name="contact_not_selected">No contact was selected.</string>
+    <string name="invalid_phone_number">Enter a valid phone number.</string>
+    <string name="contact_saved">Contact saved.</string>
+    <string name="contact_save_failed">The contact could not be saved.</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

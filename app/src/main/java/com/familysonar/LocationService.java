@@ -13,6 +13,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.BatteryManager;
 import android.location.Address;
@@ -41,6 +42,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,15 +55,29 @@ public class LocationService extends Service {
     final static String LOCATION_ACTION = "FAMILIY_SONAR_LOCATION_ACTION";
     final static String LOCATION_RESTART = "FAMILIY_SONAR_LOCATION_RESTART_ACTION";
     final static String LOCATION_CHANGE_REFRESH = "FAMILIY_SONAR_LOCATION_CHANGE_REFRESH_ACTION";
+    public static final String ACTION_REQUEST_CURRENT_LOCATION =
+            "FAMILIY_SONAR_REQUEST_CURRENT_LOCATION_ACTION";
+    public static final String ACTION_SET_REFRESH_INTERVAL =
+            "FAMILIY_SONAR_SET_REFRESH_INTERVAL_ACTION";
+    public static final String ACTION_REQUEST_LOCATION_FOR_SMS =
+            "FAMILIY_SONAR_REQUEST_LOCATION_FOR_SMS_ACTION";
+    public static final String EXTRA_LOCATION_DESTINATION = "location_destination";
+    public static final String EXTRA_REFRESH_INTERVAL_MILLIS = "refresh_interval_millis";
 
-    public static long LocationSleepRefreshPeridSeconds = 900L;
+    public static long LocationSleepRefreshPeridSeconds = 1200L;
     public static long LocationFastRefreshPeridSeconds = 10L;
 
     public static int locationsCount = -1;
 
-    private static final float SLEEP_LOCATION_MIN_DISTANCE_METERS = 100f;
+    private static final float SLEEP_LOCATION_MIN_DISTANCE_METERS = 200f;
     private static final float GEOCODE_MIN_DISTANCE_METERS = 200f;
     private static final long FAST_REQUEST_TIMEOUT_MILLIS = 30_000L;
+    private static final String LOCATION_CACHE_PREFS = "location_cache";
+    private static final String CACHE_LATITUDE = "latitude";
+    private static final String CACHE_LONGITUDE = "longitude";
+    private static final String CACHE_TIME = "time";
+    private static final String CACHE_ACCURACY = "accuracy";
+    private static final String CACHE_ADDRESS = "address";
 
     private long LocationRefreshPeridSeconds = LocationSleepRefreshPeridSeconds;
 
@@ -85,9 +101,10 @@ public class LocationService extends Service {
     private String pendingLocationNumber = "";
     private boolean stopAfterFastRequest = false;
     private boolean continuousTracking = false;
+    private boolean cachedLocationSentForRequest = false;
     private final Runnable fastRequestTimeout = () -> {
         if (locationsCount > 0) {
-            if (!sendLocationNumber.isEmpty()) {
+            if (!cachedLocationSentForRequest && !sendLocationNumber.isEmpty()) {
                 SmsManager.getDefault().sendTextMessage(sendLocationNumber, null,
                         "Nie udało się pobrać lokalizacji w ciągu 30 sekund.", null, null);
             }
@@ -95,6 +112,7 @@ public class LocationService extends Service {
             LocationRefreshPeridSeconds = LocationSleepRefreshPeridSeconds;
             sendLocationFastEnd = false;
             sendLocationNumber = "";
+            cachedLocationSentForRequest = false;
             if (stopAfterFastRequest) {
                 stopSelf();
             } else {
@@ -157,6 +175,7 @@ public class LocationService extends Service {
             public void onStatusChanged(String provider, int status, Bundle extras) {
             }
         };
+        loadCachedLocation();
         super.onCreate();
 
     }
@@ -168,7 +187,30 @@ public class LocationService extends Service {
         if (optionReceiver == null) {
             RegisterOptionReceiver();
         }
-        if (intent != null && LOCATION_CHANGE_REFRESH.equals(intent.getAction())) {
+        if (intent == null) {
+            continuousTracking = true;
+            stopAfterFastRequest = false;
+            LocationRefreshPeridSeconds = LocationSleepRefreshPeridSeconds;
+            GetLocalization();
+        } else if (ACTION_SET_REFRESH_INTERVAL.equals(intent.getAction())) {
+            continuousTracking = true;
+            stopAfterFastRequest = false;
+            if (locationsCount <= 0) {
+                long refreshMillis = intent.getLongExtra(
+                        EXTRA_REFRESH_INTERVAL_MILLIS,
+                        LocationSleepRefreshPeridSeconds * 1000L);
+                LocationRefreshPeridSeconds = Math.max(1L, refreshMillis / 1000L);
+                GetLocalization();
+            }
+        } else if (ACTION_REQUEST_LOCATION_FOR_SMS.equals(intent.getAction())) {
+            continuousTracking = true;
+            stopAfterFastRequest = false;
+            requestFastLocation(intent.getStringExtra(EXTRA_LOCATION_DESTINATION));
+        } else if (ACTION_REQUEST_CURRENT_LOCATION.equals(intent.getAction())) {
+            continuousTracking = true;
+            stopAfterFastRequest = false;
+            requestFastLocation(null);
+        } else if (LOCATION_CHANGE_REFRESH.equals(intent.getAction())) {
             stopAfterFastRequest = !continuousTracking
                     && intent.getIntExtra("refreshCounts", -1) > 0;
             applyLocationOptions(intent);
@@ -178,6 +220,13 @@ public class LocationService extends Service {
             GetLocalization();
         }
         return continuousTracking ? START_STICKY : START_NOT_STICKY;
+    }
+
+    public static boolean hasLocationPermission(Context context) {
+        return ActivityCompat.checkSelfPermission(context, ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(context, ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     @Nullable
@@ -209,11 +258,11 @@ public class LocationService extends Service {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(LocationService.LOCATION_RESTART);
         intentFilter.addAction(LocationService.LOCATION_CHANGE_REFRESH);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(optionReceiver, intentFilter, RECEIVER_EXPORTED);
-        } else {
-            registerReceiver(optionReceiver, intentFilter);
-        }
+        ContextCompat.registerReceiver(
+                this,
+                optionReceiver,
+                intentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
         Log.d("RegisterOptionReceiver", "registered");
     }
 
@@ -316,7 +365,10 @@ public class LocationService extends Service {
         Log.d("GetLocalization", currentLocationString);
         Log.d("GetLocalization", String.format("refresh time: %d",LocationRefreshPeridSeconds));
         Log.d("GetLocalization", String.format("refresh count: %d",locationsCount));
-        updateAddressIfNeeded(currentLocation);
+        persistLocation(currentLocation);
+        if (locationsCount > 0 || sendLocationFastEnd) {
+            updateAddressIfNeeded(currentLocation);
+        }
         currentLocationTime=currentLocation.getTime();
         sendLocationBroadcast();
 
@@ -361,6 +413,7 @@ public class LocationService extends Service {
                 geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1, list -> {
                     currentLocationAddress = list.isEmpty() ? "?????" : list.get(0).getAddressLine(0);
                     geocodedLocation = new Location(location);
+                    persistLocation(location);
                     addressLookupInProgress = false;
                     sendLocationBroadcast();
                     sendPendingLocation();
@@ -378,6 +431,7 @@ public class LocationService extends Service {
             List<Address> list = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
             currentLocationAddress = list.isEmpty() ? "?????" : list.get(0).getAddressLine(0);
             geocodedLocation = new Location(location);
+            persistLocation(location);
         } catch (IOException e) {
             currentLocationAddress = "?????";
         }
@@ -409,11 +463,97 @@ public class LocationService extends Service {
         }
     }
 
+    private void requestFastLocation(String destination) {
+        sendLocationNumber = destination == null ? "" : destination;
+        cachedLocationSentForRequest = false;
+        sendCachedLocation(sendLocationNumber);
+        LocationRefreshPeridSeconds = LocationFastRefreshPeridSeconds;
+        locationsCount = 1;
+        sendLocationFastEnd = true;
+        heartBeat.removeCallbacks(fastRequestTimeout);
+        heartBeat.postDelayed(fastRequestTimeout, FAST_REQUEST_TIMEOUT_MILLIS);
+        GetLocalization();
+    }
+
+    private void sendCachedLocation(String destination) {
+        if (destination == null || destination.trim().isEmpty()
+                || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        SharedPreferences preferences = getSharedPreferences(LOCATION_CACHE_PREFS, MODE_PRIVATE);
+        if (!preferences.contains(CACHE_LATITUDE) || !preferences.contains(CACHE_LONGITUDE)) {
+            SmsManager.getDefault().sendTextMessage(destination, null,
+                    "Brak zapisanej lokalizacji. Pobieram aktualny pomiar.", null, null);
+            return;
+        }
+
+        long time = preferences.getLong(CACHE_TIME, -1L);
+        float accuracy = preferences.getFloat(CACHE_ACCURACY, -1f);
+        StringBuilder message = new StringBuilder("Ostatnia lokalizacja: [")
+                .append(String.format(Locale.US, "%f,%f",
+                        preferences.getFloat(CACHE_LATITUDE, 0f),
+                        preferences.getFloat(CACHE_LONGITUDE, 0f)))
+                .append("]; czas=")
+                .append(new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
+                        .format(new java.util.Date(time)))
+                .append("; wiek=").append(formatLocationAge(time));
+        if (accuracy >= 0f) {
+            message.append("; dokładność=").append(Math.round(accuracy)).append("m");
+        }
+        String address = preferences.getString(CACHE_ADDRESS, "");
+        if (address != null && !address.isEmpty()) {
+            message.append("; adres=").append(address);
+        }
+        SmsManager.getDefault().sendTextMessage(destination, null, message.toString(), null, null);
+        cachedLocationSentForRequest = true;
+    }
+
+    private void persistLocation(Location location) {
+        if (location == null) {
+            return;
+        }
+        SharedPreferences.Editor editor = getSharedPreferences(LOCATION_CACHE_PREFS, MODE_PRIVATE)
+                .edit()
+                .putFloat(CACHE_LATITUDE, (float) location.getLatitude())
+                .putFloat(CACHE_LONGITUDE, (float) location.getLongitude())
+                .putLong(CACHE_TIME, location.getTime());
+        if (location.hasAccuracy()) {
+            editor.putFloat(CACHE_ACCURACY, location.getAccuracy());
+        }
+        if (!currentLocationAddress.isEmpty()) {
+            editor.putString(CACHE_ADDRESS, currentLocationAddress);
+        }
+        editor.apply();
+    }
+
+    private void loadCachedLocation() {
+        SharedPreferences preferences = getSharedPreferences(LOCATION_CACHE_PREFS, MODE_PRIVATE);
+        if (!preferences.contains(CACHE_LATITUDE) || !preferences.contains(CACHE_LONGITUDE)) {
+            return;
+        }
+        Location cached = new Location("cached");
+        cached.setLatitude(preferences.getFloat(CACHE_LATITUDE, 0f));
+        cached.setLongitude(preferences.getFloat(CACHE_LONGITUDE, 0f));
+        cached.setTime(preferences.getLong(CACHE_TIME, System.currentTimeMillis()));
+        float accuracy = preferences.getFloat(CACHE_ACCURACY, -1f);
+        if (accuracy >= 0f) {
+            cached.setAccuracy(accuracy);
+        }
+        currentLocation = cached;
+        currentLocationString = String.format(Locale.US, "[%f,%f]",
+                cached.getLatitude(), cached.getLongitude());
+        currentLocationTime = cached.getTime();
+        currentLocationAddress = preferences.getString(CACHE_ADDRESS, "");
+    }
+
     private String buildLocationReport() {
         StringBuilder report = new StringBuilder();
         report.append("Czas=")
                 .append(new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
                         .format(currentLocationTime))
+                .append("; wiek=").append(formatLocationAge(currentLocationTime))
                 .append("; lokalizacja=").append(currentLocationString);
         if (currentLocation.hasAccuracy()) {
             report.append("; dokladnosc=").append(Math.round(currentLocation.getAccuracy())).append("m");
@@ -430,6 +570,22 @@ public class LocationService extends Service {
         appendBatteryStatus(report);
         appendNetworkAndCells(report);
         return report.toString();
+    }
+
+    private String formatLocationAge(long locationTime) {
+        long ageMillis = Math.max(0L, System.currentTimeMillis() - locationTime);
+        long totalSeconds = ageMillis / 1000L;
+        if (totalSeconds < 60L) {
+            return totalSeconds + " s";
+        }
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        if (minutes < 60L) {
+            return minutes + " min " + seconds + " s";
+        }
+        long hours = minutes / 60L;
+        minutes %= 60L;
+        return hours + " h " + minutes + " min";
     }
 
     private void appendBatteryStatus(StringBuilder report) {
@@ -618,9 +774,9 @@ public class LocationService extends Service {
 
     private void sendLocationBroadcast() {
         if (currentLocationString.isEmpty()) return;
-        if (currentLocationAddress.isEmpty()) return;
         Intent locationIntent = new Intent();
         locationIntent.setAction(LOCATION_ACTION);
+        locationIntent.setPackage(getPackageName());
         locationIntent.putExtra("location", currentLocationString);
         locationIntent.putExtra("address", currentLocationAddress);
         locationIntent.putExtra("time",currentLocation.getTime());

@@ -1,28 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="1dp"
-    android:paddingBottom="1dp"
-    >
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@color/safe_surface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/safe_outline"
+    app:strokeWidth="1dp">
 
-    <TextView
-        android:layout_gravity="center"
-        android:id="@+id/phone_number"
-        android:textSize="17sp"
-        android:layout_width="0dp"
-        android:layout_marginLeft="10sp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        />
-<ImageButton
-    android:id="@+id/sendLocalization"
-    android:layout_width="45sp"
-    android:layout_height="45sp"
-    android:contentDescription="Wyślij testową komendę ?loc?"
-    android:src="@drawable/crosshairs_gps"/>
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="8dp">
 
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/avatar_background" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/phone_number"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/safe_on_surface"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/sendLocalization"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Wyślij testową komendę ?loc?"
+            android:padding="10dp"
+            android:src="@drawable/crosshairs_gps"
+            app:tint="@color/safe_primary" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

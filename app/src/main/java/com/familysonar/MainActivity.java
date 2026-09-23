@@ -34,7 +34,6 @@ import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.telephony.PhoneNumberUtils;
@@ -156,14 +155,14 @@ public class MainActivity extends AppCompatActivity {
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent locationIntent = new Intent();
-                locationIntent.setAction(LocationService.LOCATION_CHANGE_REFRESH);
-                locationIntent.putExtra("refresh_s", LocationService.LocationFastRefreshPeridSeconds);
-                locationIntent.putExtra("refreshCounts", 1);
-                sendBroadcast(locationIntent);
-
+                Intent locationIntent = new Intent(MainActivity.this, LocationService.class)
+                        .setAction(LocationService.ACTION_REQUEST_CURRENT_LOCATION);
+                ContextCompat.startForegroundService(MainActivity.this, locationIntent);
             }
         });
+
+        findViewById(R.id.settingsButton).setOnClickListener(
+                view -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
 
         //check permission
         if (!checkPermission()) {
@@ -241,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
                 //background
                 Paint paintBackground = new Paint();
-                paintBackground.setColor(0xffff1100);
+                paintBackground.setColor(ContextCompat.getColor(MainActivity.this, R.color.safe_error));
                 float backLeft = 0; //viewHolder.itemView.getLeft()+viewHolder.itemView.getWidth()+dX;
                 float backTop = viewHolder.itemView.getTop();
                 float backRight = dX; //backLeft + Math.abs(dX);
@@ -260,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
 
                 //text
                 Paint textPaint = new Paint();
-                textPaint.setColor(0xffffffff);
+                textPaint.setColor(ContextCompat.getColor(MainActivity.this, R.color.safe_on_primary));
 
                 int textMargin = 20;
                 Rect textBounds = new Rect();
@@ -281,48 +280,6 @@ public class MainActivity extends AppCompatActivity {
         });
         helper.attachToRecyclerView(recyclerView);
 
-
-        //dodawanie numer floating button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                View dialogView = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_add_number, null);
-                EditText editedField = dialogView.findViewById(R.id.textviewPhoneNumber);
-                editedField.setRawInputType(InputType.TYPE_CLASS_PHONE);
-                AlertDialog.Builder editDialog = new AlertDialog.Builder(MainActivity.this);
-                editDialog.setView(dialogView);
-                editDialog.setTitle("Dodawanie numeru");
-                editDialog.setMessage("Wpisz numer, który chcesz dodać");
-                editDialog.setPositiveButton("Dodaj", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        contactAdapter.AddItem(editedField.getText().toString());
-                        try {
-                            _configData.Save();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (ClassNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-                editDialog.setNegativeButton("Anuluj", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-
-                    }
-                });
-                editDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialogInterface) {
-                        contactAdapter.notifyDataSetChanged();
-                    }
-                });
-                editDialog.show();
-            }
-        });
-
         FloatingActionButton fabContacts = findViewById(R.id.fabContacts);
         fabContacts.setOnClickListener(view -> {
             Intent pickContact = new Intent(Intent.ACTION_PICK,
@@ -334,38 +291,48 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        FloatingActionButton fabSOS = findViewById(R.id.fabSOS);
-        fabSOS.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                for (Contact contact : _configData.getContactList()) {
-                    FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
-                    if (ContextCompat.checkSelfPermission(MainActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                            && ContextCompat.checkSelfPermission(MainActivity.this, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        Toast.makeText(MainActivity.this, "Brak uprawnienia do lokalizacji.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location == null) {
-                                Toast.makeText(MainActivity.this, "Brak dostępnej lokalizacji.", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-                            Log.d("FalimySonarApp", "onSOSFusedLocationSuccess");
-                            String smsMessage = String.format("!!! S.O.S !!! Potrzebuje twojej pomocy, moja lokalizacja to: [%f;%f]", location.getLatitude(), location.getLongitude());
-                            smsMessage = smsMessage.replace(",", ".");
-                            smsMessage = smsMessage.replace(";", ",");
-                            SmsManager.getDefault().sendTextMessage(contact.getPhone(), null, smsMessage, null, null);
-                            Log.d("FalimySonarApp", smsMessage);
-
-                        }
-                    });
-                }
-            }
-        });
+        findViewById(R.id.sosButton).setOnClickListener(view ->
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Potwierdź SOS")
+                        .setMessage("Czy na pewno wysłać prośbę o pomoc do wszystkich zaufanych kontaktów?")
+                        .setNegativeButton("Anuluj", null)
+                        .setPositiveButton("Wyślij SOS", (dialog, which) -> sendSosMessages())
+                        .show());
 
         StartLocationService();
+    }
+
+    private void sendSosMessages() {
+        if (_configData.getContactList().isEmpty()) {
+            Toast.makeText(this, "Brak zaufanych kontaktów.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Brak uprawnienia do lokalizacji.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        FusedLocationProviderClient fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+            if (location == null) {
+                Toast.makeText(this, "Brak dostępnej lokalizacji.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            String smsMessage = String.format(
+                    Locale.US,
+                    "!!! S.O.S !!! Potrzebuję twojej pomocy, moja lokalizacja to: [%f;%f]",
+                    location.getLatitude(),
+                    location.getLongitude())
+                    .replace(",", ".")
+                    .replace(";", ",");
+            for (Contact contact : _configData.getContactList()) {
+                SmsManager.getDefault().sendTextMessage(
+                        contact.getPhone(), null, smsMessage, null, null);
+            }
+            Toast.makeText(this, "Wysłano SOS do zaufanych kontaktów.", Toast.LENGTH_LONG).show();
+        });
     }
 
 
@@ -374,16 +341,7 @@ public class MainActivity extends AppCompatActivity {
         batteryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                Intent intent;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                        && !powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-                    intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                            Uri.fromParts("package", getPackageName(), null));
-                } else {
-                    intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                }
-                startActivity(intent);
+                startActivity(new Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS));
             }
         });
         return true;
@@ -534,16 +492,16 @@ public class MainActivity extends AppCompatActivity {
         if (!permissionGranded) {
             TextView view = findViewById(R.id.perissionInfo);
             view.setText("UWAGA !!. Musisz przyznać wszyskie, żądane przez oplikację upawnienia.");
-            view.setTextColor(Color.RED);
+            view.setTextColor(ContextCompat.getColor(this, R.color.safe_error));
         } else {
             TextView view = findViewById(R.id.perissionInfo);
             if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                     && !hasPhoneStatePermission()) {
                 view.setText("Brak dostępu do telefonu: raport BTS i sieci będzie niepełny.");
-                view.setTextColor(Color.RED);
+                view.setTextColor(ContextCompat.getColor(this, R.color.safe_error));
             } else {
                 view.setText("Przyznano wymagane uprawnienia.");
-                view.setTextColor(Color.parseColor("#006b0b"));
+                view.setTextColor(ContextCompat.getColor(this, R.color.safe_secondary));
             }
         }
 
@@ -553,9 +511,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void StartLocationService() {
-        if (checkPermission()) {
+        if (checkPermission() && !LocationService.isRunning) {
             Intent locationService = new Intent(MainActivity.this, LocationService.class);
-            startForegroundService(locationService);
+            ContextCompat.startForegroundService(this, locationService);
         }
     }
 
@@ -567,11 +525,11 @@ public class MainActivity extends AppCompatActivity {
         locationBroadcastReceiver = new LocationBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(LocationService.LOCATION_ACTION);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(locationBroadcastReceiver, intentFilter, RECEIVER_EXPORTED);
-        } else {
-            registerReceiver(locationBroadcastReceiver, intentFilter);
-        }
+        ContextCompat.registerReceiver(
+                this,
+                locationBroadcastReceiver,
+                intentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
 
 
         //prepare new timertask for gui refreshing
@@ -614,10 +572,14 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(locationBroadcastReceiver);
         timerGui.cancel();
         //make location slower, for battery saving
-        Intent locationIntent = new Intent();
-        locationIntent.setAction(LocationService.LOCATION_CHANGE_REFRESH);
-        locationIntent.putExtra("refresh_s", LocationService.LocationSleepRefreshPeridSeconds);
-        sendBroadcast(locationIntent);
+        Intent locationIntent = new Intent(this, LocationService.class)
+                .setAction(LocationService.ACTION_SET_REFRESH_INTERVAL)
+                .putExtra(
+                        LocationService.EXTRA_REFRESH_INTERVAL_MILLIS,
+                        LocationService.LocationSleepRefreshPeridSeconds * 1000L);
+        if (LocationService.isRunning) {
+            startService(locationIntent);
+        }
 
         super.onStop();
     }

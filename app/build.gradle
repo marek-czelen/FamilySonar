@@ -46,4 +46,6 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     implementation libs.play.services.location
+    implementation libs.glide
+    implementation libs.exifinterface
 }

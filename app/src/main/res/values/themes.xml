@@ -1,8 +1,20 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.FamilySonar" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/safe_primary</item>
+        <item name="colorOnPrimary">@color/safe_on_primary</item>
+        <item name="colorPrimaryContainer">@color/safe_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/safe_on_primary_container</item>
+        <item name="colorSecondary">@color/safe_secondary</item>
+        <item name="colorOnSecondary">@color/safe_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/safe_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/safe_on_secondary_container</item>
+        <item name="colorSurface">@color/safe_surface</item>
+        <item name="colorOnSurface">@color/safe_on_surface</item>
+        <item name="colorSurfaceVariant">@color/safe_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/safe_muted</item>
+        <item name="colorOutline">@color/safe_outline</item>
+        <item name="android:fontFamily">sans</item>
     </style>
 
     <style name="Theme.FamilySonar" parent="Base.Theme.FamilySonar" />

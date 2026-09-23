@@ -1,5 +1,7 @@
 package com.familysonar;
 
+import android.telephony.PhoneNumberUtils;
+
 import java.io.Serializable;
 
 public class Contact implements Serializable {
@@ -17,6 +19,12 @@ public class Contact implements Serializable {
 
     public String getPhone() {
         return _phoneNumber;
+    }
+
+    public boolean matchesPhone(String phone) {
+        return _phoneNumber != null
+                && phone != null
+                && PhoneNumberUtils.compare(_phoneNumber, phone);
     }
 
 }

@@ -26,6 +26,7 @@ The active application is a single Android module built around one launcher `Act
 - **Trusted contacts:** add phone numbers, persist them locally, remove them with a swipe gesture, and display them in a `RecyclerView`.
 - **Manual location requests:** start a one-time request for a selected contact from the contact list.
 - **SMS location requests:** accept the exact `?loc?` command only when the sender's number matches a saved contact.
+- **Emergency location password:** an optional user-defined password enables the exact `?loc?password` command from any phone; only the SHA-256 hash is stored locally.
 - **Emergency SOS:** send the last location returned by the fused location provider to all saved contacts.
 - **GPS and network location:** use Android `LocationManager` providers, with GPS preferred when a recent GPS fix is available.
 - **Location response:** send the measurement time, coordinates, and a geocoded address as separate SMS messages for an authorized request.
@@ -59,7 +60,7 @@ The repository contains one `app` module. The main screen is implemented directl
 | [`ConfigData`](app/src/main/java/com/familysonar/ConfigData.java) | Stores `ContactList` in the app's private files directory as `configdata.dat`. |
 | [`JobService`](app/src/main/java/com/familysonar/JobService.java) | Contains an alternate cell-information SMS response path; the active SMS receiver starts `LocationService` instead of scheduling this job. |
 
-`BootCompleteReceiverClass` is present as a Java class, but it is not registered in the current manifest and therefore is not documented as an active boot-start feature.
+`BootCompleteReceiverClass` is registered in the manifest and starts the low-power location service after boot when the required permissions are available. The service keeps a persistent last-location cache so an authorized `?loc?` request can receive an immediate response even before a fresh fix is obtained.
 
 ## 🔄 Data Flow
 
@@ -89,7 +90,9 @@ sequenceDiagram
     end
 ```
 
-The foreground service uses a 15-minute standard interval and a 10-second fast interval. A fast SMS request is configured for one location update and has a 30-second timeout response when no update is obtained.
+The foreground service uses a 20-minute low-power standard interval and a 10-second fast interval. Periodic updates do not start GPS and use a 200-meter minimum movement. A fast SMS request immediately sends the persisted last location, then attempts one fresh update for up to 30 seconds and sends a second SMS when a newer fix is available.
+
+When an emergency password is configured, the exact `?loc?password` command is also accepted from an unknown sender and the response is sent to that sender. The password is case-sensitive, must contain 6-64 non-whitespace characters, and is never stored in plaintext.
 
 ### Local manual request and SOS
 
@@ -168,6 +171,7 @@ On first launch, grant the requested SMS, foreground/background location, and no
 
 - `configdata.dat` is Java-serialized local data and is not encrypted. The manifest enables Android backup, while the repository's backup rules do not exclude this file; privacy-sensitive contact data should be reviewed before distribution.
 - SMS and location data are sensitive. The request protocol has no cryptographic authentication or message encryption, and authorization depends on the sender address supplied by the telephony stack.
+- The emergency password is a shared secret transmitted through SMS. Anyone who obtains it can request the device location, and SMS sender identity can be spoofed by carrier or device-specific mechanisms; use a long, unique password and rotate it if exposed.
 - Phone numbers are compared as raw strings. International formatting, normalization, duplicates, and spoofing or carrier-specific sender formats are not handled.
 - SMS send failures, unavailable providers, missing last locations, and some permission/error paths are not surfaced through a complete user-facing error model.
 - The release variant uses the debug key. A production release would need a protected signing key, explicit backup policy, privacy documentation, and a tested release process.

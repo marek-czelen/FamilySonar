@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="backgroundColor">#0E1726</color>
+    <color name="backgroundColorPress">#1B2A40</color>
+    <color name="red">#FF8B99</color>
+    <color name="red_press">#FFB1BA</color>
+    <color name="dark_gray">#2B405A</color>
+    <color name="dark_gray_press">#405A78</color>
+    <color name="safe_background">#0E1726</color>
+    <color name="safe_on_background">#EEF4FC</color>
+    <color name="safe_surface">#162336</color>
+    <color name="safe_on_surface">#EEF4FC</color>
+    <color name="safe_muted">#9AAAC0</color>
+    <color name="safe_outline">#2B405A</color>
+    <color name="safe_primary">#7C9BFF</color>
+    <color name="safe_on_primary">#10265E</color>
+    <color name="safe_primary_container">#20396F</color>
+    <color name="safe_on_primary_container">#DCE5FF</color>
+    <color name="safe_secondary">#5ED6C0</color>
+    <color name="safe_on_secondary">#073B34</color>
+    <color name="safe_secondary_container">#17483F</color>
+    <color name="safe_on_secondary_container">#B6F2E6</color>
+    <color name="safe_surface_variant">#1D3047</color>
+    <color name="safe_info_background">#20396F</color>
+    <color name="safe_error_background">#512A35</color>
+    <color name="safe_error">#FFB1BA</color>
+    <color name="ic_launcher_background">#295FEF</color>
+</resources>
