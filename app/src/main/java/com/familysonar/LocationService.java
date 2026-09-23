@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.BatteryManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -23,9 +24,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.telephony.SmsManager;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoNr;
+import android.telephony.CellInfoTdscdma;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellIdentityNr;
+import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,10 +43,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class LocationService extends Service {
     public static boolean isRunning=false;
@@ -75,13 +84,22 @@ public class LocationService extends Service {
     private boolean addressLookupInProgress = false;
     private String pendingLocationNumber = "";
     private boolean stopAfterFastRequest = false;
+    private boolean continuousTracking = false;
     private final Runnable fastRequestTimeout = () -> {
-        if (stopAfterFastRequest && locationsCount > 0) {
+        if (locationsCount > 0) {
             if (!sendLocationNumber.isEmpty()) {
                 SmsManager.getDefault().sendTextMessage(sendLocationNumber, null,
                         "Nie udało się pobrać lokalizacji w ciągu 30 sekund.", null, null);
             }
-            stopSelf();
+            locationsCount = -1;
+            LocationRefreshPeridSeconds = LocationSleepRefreshPeridSeconds;
+            sendLocationFastEnd = false;
+            sendLocationNumber = "";
+            if (stopAfterFastRequest) {
+                stopSelf();
+            } else {
+                GetLocalization();
+            }
         }
     };
 
@@ -151,12 +169,15 @@ public class LocationService extends Service {
             RegisterOptionReceiver();
         }
         if (intent != null && LOCATION_CHANGE_REFRESH.equals(intent.getAction())) {
-            stopAfterFastRequest = true;
+            stopAfterFastRequest = !continuousTracking
+                    && intent.getIntExtra("refreshCounts", -1) > 0;
             applyLocationOptions(intent);
         } else {
+            continuousTracking = true;
+            stopAfterFastRequest = false;
             GetLocalization();
         }
-        return START_NOT_STICKY;
+        return continuousTracking ? START_STICKY : START_NOT_STICKY;
     }
 
     @Nullable
@@ -201,7 +222,7 @@ public class LocationService extends Service {
             NotificationChannel serviceChannel = new NotificationChannel(
                     CHANNEL_ID,
                     "Location Service Channel",
-                    NotificationManager.IMPORTANCE_HIGH
+                    NotificationManager.IMPORTANCE_LOW
             );
             NotificationManager manager =
                     getSystemService(NotificationManager.class);
@@ -218,6 +239,7 @@ public class LocationService extends Service {
                 NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Location Service")
                 .setContentText("Getting location updates")
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true);
         if (android.os.Build.VERSION.SDK_INT >=
@@ -229,6 +251,21 @@ public class LocationService extends Service {
 
 
     private void GetLocalization() {
+        boolean hasFineLocation = ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarseLocation = ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        if (!hasFineLocation && !hasCoarseLocation) {
+            Log.e("LocationService", "Location updates cannot run: location permission is missing");
+            if (!sendLocationNumber.isEmpty()
+                    && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.SEND_SMS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                SmsManager.getDefault().sendTextMessage(sendLocationNumber, null,
+                        "Brak uprawnienia do lokalizacji.", null, null);
+            }
+            stopSelf();
+            return;
+        }
         if (locationManager == null){
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         }
@@ -236,11 +273,7 @@ public class LocationService extends Service {
         boolean isNetworkProvider = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
         boolean isFastRequest = locationsCount > 0;
-        if (isGPSProvider && isFastRequest) {
-            if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            }
+        if (isGPSProvider && isFastRequest && hasFineLocation) {
             locationManager.removeUpdates(gpsLocationListener);
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER,
@@ -335,6 +368,8 @@ public class LocationService extends Service {
             } catch (Exception ex) {
                 addressLookupInProgress = false;
                 currentLocationAddress = "?????";
+                sendLocationBroadcast();
+                sendPendingLocation();
             }
             return;
         }
@@ -346,6 +381,8 @@ public class LocationService extends Service {
         } catch (IOException e) {
             currentLocationAddress = "?????";
         }
+        sendLocationBroadcast();
+        sendPendingLocation();
     }
 
     private void sendPendingLocation() {
@@ -357,11 +394,224 @@ public class LocationService extends Service {
     }
 
     private void sendCurrentLocation(String destination) {
-        SmsManager.getDefault().sendTextMessage(destination, null,
-                new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(currentLocationTime),
-                null, null);
-        SmsManager.getDefault().sendTextMessage(destination, null, currentLocationString, null, null);
-        SmsManager.getDefault().sendTextMessage(destination, null, currentLocationAddress, null, null);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.e("LocationService", "Cannot send location report: SEND_SMS permission is missing");
+            return;
+        }
+        String message = buildLocationReport();
+        SmsManager smsManager = SmsManager.getDefault();
+        ArrayList<String> parts = smsManager.divideMessage(message);
+        if (parts.size() == 1) {
+            smsManager.sendTextMessage(destination, null, message, null, null);
+        } else {
+            smsManager.sendMultipartTextMessage(destination, null, parts, null, null);
+        }
+    }
+
+    private String buildLocationReport() {
+        StringBuilder report = new StringBuilder();
+        report.append("Czas=")
+                .append(new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
+                        .format(currentLocationTime))
+                .append("; lokalizacja=").append(currentLocationString);
+        if (currentLocation.hasAccuracy()) {
+            report.append("; dokladnosc=").append(Math.round(currentLocation.getAccuracy())).append("m");
+        }
+        if (!currentLocationAddress.isEmpty()) {
+            report.append("; adres=").append(currentLocationAddress);
+        }
+
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        report.append("; oszczedzanie_baterii=")
+                .append(powerManager.isPowerSaveMode() ? "ON" : "OFF");
+        report.append("; usluga_lokalizacji=")
+                .append(isRunning ? "dziala" : "nie_dziala");
+        appendBatteryStatus(report);
+        appendNetworkAndCells(report);
+        return report.toString();
+    }
+
+    private void appendBatteryStatus(StringBuilder report) {
+        Intent batteryStatus = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (batteryStatus == null) {
+            report.append("; bateria=brak_danych");
+            return;
+        }
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        if (level >= 0 && scale > 0) {
+            report.append("; bateria=").append(Math.round(level * 100f / scale)).append("%");
+        } else {
+            report.append("; bateria=brak_danych");
+        }
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        report.append("; ladowanie=")
+                .append(status == BatteryManager.BATTERY_STATUS_CHARGING
+                        || status == BatteryManager.BATTERY_STATUS_FULL ? "tak" : "nie");
+    }
+
+    private void appendNetworkAndCells(StringBuilder report) {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            report.append("; siec=brak_modemu; BTS=brak_modemu");
+            return;
+        }
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+            report.append("; siec=brak_uprawnienia; BTS=brak_uprawnienia");
+            return;
+        }
+
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        if (telephonyManager == null) {
+            report.append("; siec=brak_danych; BTS=brak_danych");
+            return;
+        }
+        try {
+            String operator = telephonyManager.getNetworkOperatorName();
+            int networkType = telephonyManager.getDataNetworkType();
+            if (networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN) {
+                networkType = telephonyManager.getVoiceNetworkType();
+            }
+            report.append("; siec=").append(networkTypeName(networkType));
+            if (operator != null && !operator.trim().isEmpty()) {
+                report.append(" ").append(operator.trim());
+            }
+        } catch (SecurityException exception) {
+            report.append("; siec=brak_uprawnienia");
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            report.append("; BTS=brak_uprawnienia_lokalizacji");
+            return;
+        }
+        try {
+            List<CellInfo> cells = telephonyManager.getAllCellInfo();
+            if (cells == null || cells.isEmpty()) {
+                report.append("; BTS=brak_danych");
+                return;
+            }
+            report.append("; BTS=");
+            boolean first = true;
+            for (CellInfo cell : cells) {
+                String description = describeCell(cell);
+                if (description == null) {
+                    continue;
+                }
+                if (!first) {
+                    report.append(" | ");
+                }
+                report.append(description);
+                first = false;
+            }
+            if (first) {
+                report.append("brak_danych");
+            }
+        } catch (SecurityException exception) {
+            report.append("; BTS=brak_uprawnienia");
+        }
+    }
+
+    private String describeCell(CellInfo cell) {
+        if (cell instanceof CellInfoGsm) {
+            CellInfoGsm info = (CellInfoGsm) cell;
+            return cellDescription(cell, "GSM", info.getCellIdentity().getMccString(),
+                    info.getCellIdentity().getMncString(), "LAC",
+                    info.getCellIdentity().getLac(), "CID", info.getCellIdentity().getCid(),
+                    info.getCellSignalStrength().getDbm());
+        }
+        if (cell instanceof CellInfoLte) {
+            CellInfoLte info = (CellInfoLte) cell;
+            return cellDescription(cell, "LTE", info.getCellIdentity().getMccString(),
+                    info.getCellIdentity().getMncString(), "TAC",
+                    info.getCellIdentity().getTac(), "CID", info.getCellIdentity().getCi(),
+                    info.getCellSignalStrength().getDbm());
+        }
+        if (cell instanceof CellInfoWcdma) {
+            CellInfoWcdma info = (CellInfoWcdma) cell;
+            return cellDescription(cell, "UMTS", info.getCellIdentity().getMccString(),
+                    info.getCellIdentity().getMncString(), "LAC",
+                    info.getCellIdentity().getLac(), "CID", info.getCellIdentity().getCid(),
+                    info.getCellSignalStrength().getDbm());
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell instanceof CellInfoTdscdma) {
+            CellInfoTdscdma info = (CellInfoTdscdma) cell;
+            return cellDescription(cell, "UMTS", info.getCellIdentity().getMccString(),
+                    info.getCellIdentity().getMncString(), "LAC",
+                    info.getCellIdentity().getLac(), "CID", info.getCellIdentity().getCid(),
+                    info.getCellSignalStrength().getDbm());
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cell instanceof CellInfoNr) {
+            CellInfoNr info = (CellInfoNr) cell;
+            CellIdentityNr identity = (CellIdentityNr) info.getCellIdentity();
+            return cellDescription(cell, "NR", identity.getMccString(),
+                    identity.getMncString(), "TAC",
+                    identity.getTac(), "NCI", identity.getNci(),
+                    info.getCellSignalStrength().getDbm());
+        }
+        if (cell instanceof CellInfoCdma) {
+            CellInfoCdma info = (CellInfoCdma) cell;
+            return (cell.isRegistered() ? "*" : "") + "CDMA SID="
+                    + info.getCellIdentity().getSystemId() + " NID="
+                    + info.getCellIdentity().getNetworkId() + " BID="
+                    + info.getCellIdentity().getBasestationId() + " dBm="
+                    + signalValue(info.getCellSignalStrength().getDbm());
+        }
+        return null;
+    }
+
+    private String cellDescription(CellInfo cell, String radio, String mcc, String mnc,
+                                   String areaLabel, int areaCode, String idLabel, long cellId,
+                                   int dbm) {
+        return (cell.isRegistered() ? "*" : "") + radio
+                + " MCC=" + textValue(mcc)
+                + " MNC=" + textValue(mnc)
+                + " " + areaLabel + "=" + numberValue(areaCode)
+                + " " + idLabel + "=" + numberValue(cellId)
+                + " dBm=" + signalValue(dbm);
+    }
+
+    private String networkTypeName(int networkType) {
+        switch (networkType) {
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+            case TelephonyManager.NETWORK_TYPE_IDEN:
+            case TelephonyManager.NETWORK_TYPE_GSM:
+                return "2G";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+            case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
+                return "3G";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+            case 19:
+                return "4G/LTE";
+            case TelephonyManager.NETWORK_TYPE_NR:
+                return "5G/NR";
+            default:
+                return "nieznana";
+        }
+    }
+
+    private String textValue(String value) {
+        return value == null || value.isEmpty() ? "?" : value;
+    }
+
+    private String numberValue(long value) {
+        return value < 0 ? "?" : String.valueOf(value);
+    }
+
+    private String signalValue(int dbm) {
+        return dbm == Integer.MAX_VALUE ? "?" : String.valueOf(dbm);
     }
 
 
@@ -399,9 +649,10 @@ public class LocationService extends Service {
     private void applyLocationOptions(Intent intent) {
         LocationRefreshPeridSeconds=intent.getLongExtra("refresh_s",LocationService.LocationSleepRefreshPeridSeconds);
         locationsCount=intent.getIntExtra("refreshCounts",-1);
-        sendLocationNumber = intent.getStringExtra("from");
+        String requestNumber = intent.getStringExtra("from");
+        sendLocationNumber = requestNumber == null ? "" : requestNumber;
         sendLocationFastEnd = intent.getBooleanExtra("sendLocationFastEnd", false);
-        if (stopAfterFastRequest && locationsCount > 0) {
+        if (locationsCount > 0) {
             heartBeat.removeCallbacks(fastRequestTimeout);
             heartBeat.postDelayed(fastRequestTimeout, FAST_REQUEST_TIMEOUT_MILLIS);
         }

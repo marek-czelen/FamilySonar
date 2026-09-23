@@ -7,17 +7,19 @@ import static android.Manifest.permission.FOREGROUND_SERVICE;
 import static android.Manifest.permission.FOREGROUND_SERVICE_LOCATION;
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.RECEIVE_SMS;
 import static android.Manifest.permission.SEND_SMS;
-import static android.Manifest.permission.WAKE_LOCK;
 
-import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.content.pm.PackageManager;
+import android.provider.ContactsContract;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -32,10 +34,10 @@ import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.telephony.SmsManager;
+import android.telephony.PhoneNumberUtils;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,7 +54,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -60,9 +61,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -88,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
             SEND_SMS
         };
 
+        private static final String[] PHONE_PERMISSIONS = {
+            READ_PHONE_STATE
+        };
+
         private static final String[] LOCATION_PERMISSIONS = {
             ACCESS_COARSE_LOCATION,
             ACCESS_FINE_LOCATION
@@ -95,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
         private enum PermissionRequest {
             SMS,
+            PHONE_STATE,
             LOCATION,
             NOTIFICATIONS,
             BACKGROUND_LOCATION
@@ -107,6 +111,15 @@ public class MainActivity extends AppCompatActivity {
     String lastLocation = "";
     long lastLocationTime = System.currentTimeMillis();
     Timer timerGui = null;
+
+    private final ActivityResultLauncher<Intent> contactPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != RESULT_OK || result.getData() == null
+                        || result.getData().getData() == null) {
+                    return;
+                }
+                addContactFromPicker(result.getData().getData());
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent locationIntent = new Intent();
                 locationIntent.setAction(LocationService.LOCATION_CHANGE_REFRESH);
                 locationIntent.putExtra("refresh_s", LocationService.LocationFastRefreshPeridSeconds);
+                locationIntent.putExtra("refreshCounts", 1);
                 sendBroadcast(locationIntent);
 
             }
@@ -157,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
             requestPermission();
         } else {
             PermissionInfo(true);
+            requestPhoneStatePermission();
         }
 
 
@@ -308,21 +323,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        FloatingActionButton fabContacts = findViewById(R.id.fabContacts);
+        fabContacts.setOnClickListener(view -> {
+            Intent pickContact = new Intent(Intent.ACTION_PICK,
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+            try {
+                contactPickerLauncher.launch(pickContact);
+            } catch (ActivityNotFoundException exception) {
+                Toast.makeText(MainActivity.this, "Brak aplikacji do wyboru kontaktu.", Toast.LENGTH_LONG).show();
+            }
+        });
+
         FloatingActionButton fabSOS = findViewById(R.id.fabSOS);
         fabSOS.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 for (Contact contact : _configData.getContactList()) {
-                    PowerManager TempPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                    PowerManager.WakeLock TempWakeLock = TempPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "famillySonal:TempWakeLock");
-                    TempWakeLock.acquire();
                     FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ContextCompat.checkSelfPermission(MainActivity.this, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        Toast.makeText(MainActivity.this, "Brak uprawnienia do lokalizacji.", Toast.LENGTH_LONG).show();
                         return;
                     }
                     mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
+                            if (location == null) {
+                                Toast.makeText(MainActivity.this, "Brak dostępnej lokalizacji.", Toast.LENGTH_LONG).show();
+                                return;
+                            }
                             Log.d("FalimySonarApp", "onSOSFusedLocationSuccess");
                             String smsMessage = String.format("!!! S.O.S !!! Potrzebuje twojej pomocy, moja lokalizacja to: [%f;%f]", location.getLatitude(), location.getLongitude());
                             smsMessage = smsMessage.replace(",", ".");
@@ -331,16 +360,12 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("FalimySonarApp", smsMessage);
 
                         }
-                    }).addOnCompleteListener(new OnCompleteListener<Location>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Location> task) {
-                            Log.d("FalimySonarApp", "SOS completed");
-                            TempWakeLock.release();
-                        }
                     });
                 }
             }
         });
+
+        StartLocationService();
     }
 
 
@@ -349,12 +374,57 @@ public class MainActivity extends AppCompatActivity {
         batteryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_BATTERY_SAVER_SETTINGS);
+                PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                Intent intent;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                        && !powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+                    intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            Uri.fromParts("package", getPackageName(), null));
+                } else {
+                    intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                }
                 startActivity(intent);
             }
         });
         return true;
+    }
+
+    private void addContactFromPicker(Uri contactUri) {
+        String[] projection = {
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+        };
+        try (Cursor cursor = getContentResolver().query(contactUri, projection, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                Toast.makeText(this, "Nie udało się odczytać wybranego kontaktu.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+            String phone = cursor.getString(cursor.getColumnIndexOrThrow(
+                    ContactsContract.CommonDataKinds.Phone.NUMBER));
+            if (phone == null || phone.trim().isEmpty()) {
+                Toast.makeText(this, "Wybrany kontakt nie ma numeru telefonu.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            for (Contact contact : _configData.getContactList()) {
+                if (contact.getPhone() != null
+                        && PhoneNumberUtils.compare(contact.getPhone(), phone)) {
+                    Toast.makeText(this, "Ten numer jest już na liście.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+            contactAdapter.AddItem(name == null ? "" : name, phone);
+            saveContactList();
+        }
+    }
+
+    private void saveContactList() {
+        try {
+            _configData.Save();
+        } catch (IOException | ClassNotFoundException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     private boolean checkPermission() {
@@ -371,8 +441,11 @@ public class MainActivity extends AppCompatActivity {
                 switch (currentPermissionRequest) {
                     case SMS:
                         if (hasPermissions(SMS_PERMISSIONS)) {
-                            requestLocationPermissions();
+                            requestPhoneStatePermission();
                         }
+                        break;
+                    case PHONE_STATE:
+                        requestLocationPermissions();
                         break;
                     case LOCATION:
                         if (hasPermissions(LOCATION_PERMISSIONS)) {
@@ -386,7 +459,15 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
                 PermissionInfo(checkPermission());
+                if (checkPermission()) {
+                    StartLocationService();
+                }
             });
+
+    private boolean hasPhoneStatePermission() {
+        return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || hasPermissions(PHONE_PERMISSIONS);
+    }
 
     private boolean hasPermissions(String[] permissions) {
         for (String permission : permissions) {
@@ -401,6 +482,16 @@ public class MainActivity extends AppCompatActivity {
         if (!hasPermissions(SMS_PERMISSIONS)) {
             currentPermissionRequest = PermissionRequest.SMS;
             requestPermissionsLauncher.launch(SMS_PERMISSIONS);
+            return;
+        }
+        requestPhoneStatePermission();
+    }
+
+    private void requestPhoneStatePermission() {
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && !hasPermissions(PHONE_PERMISSIONS)) {
+            currentPermissionRequest = PermissionRequest.PHONE_STATE;
+            requestPermissionsLauncher.launch(PHONE_PERMISSIONS);
             return;
         }
         requestLocationPermissions();
@@ -446,8 +537,14 @@ public class MainActivity extends AppCompatActivity {
             view.setTextColor(Color.RED);
         } else {
             TextView view = findViewById(R.id.perissionInfo);
-            view.setText("Przyznano wszystkie żądane uprawnienia.");
-            view.setTextColor(Color.parseColor("#006b0b"));
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                    && !hasPhoneStatePermission()) {
+                view.setText("Brak dostępu do telefonu: raport BTS i sieci będzie niepełny.");
+                view.setTextColor(Color.RED);
+            } else {
+                view.setText("Przyznano wymagane uprawnienia.");
+                view.setTextColor(Color.parseColor("#006b0b"));
+            }
         }
 
     }
@@ -456,7 +553,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void StartLocationService() {
-        if (!LocationService.isRunning && checkPermission()) {
+        if (checkPermission()) {
             Intent locationService = new Intent(MainActivity.this, LocationService.class);
             startForegroundService(locationService);
         }
@@ -507,7 +604,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             }
-        }, 0, 1000);
+        }, 0, 30_000);
 
         super.onStart();
     }

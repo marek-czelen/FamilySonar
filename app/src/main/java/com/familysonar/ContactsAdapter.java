@@ -1,25 +1,21 @@
 package com.familysonar;
 
-import static android.content.Context.ALARM_SERVICE;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.Manifest;
 import android.telephony.SmsManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>{
     Context context;
@@ -38,17 +34,25 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.phoneNumber.setText(contactList.get(position).getPhone());
+        Contact contact = contactList.get(position);
+        String displayName = contact.getName();
+        holder.phoneNumber.setText(displayName == null || displayName.trim().isEmpty()
+                ? contact.getPhone()
+                : displayName + " (" + contact.getPhone() + ")");
         holder.localizationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-                Intent alarmIntent = new Intent(context,AlarmReceiverClass.class);
-                alarmIntent.putExtra("from",contactList.get(position).getPhone());
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(context,0,alarmIntent,PendingIntent.FLAG_IMMUTABLE);
-                long timeInMilis = Calendar.getInstance().getTimeInMillis()+1000;
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,timeInMilis,0,pendingIntent);
-                Log.d("FalimySonarApp", "onAlamscheduleOnDemend");
+                if (contact.getPhone() == null || contact.getPhone().trim().isEmpty()) {
+                    Toast.makeText(context, "Brak numeru telefonu.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(context, "Brak uprawnienia do wysyłania SMS-ów.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                SmsManager.getDefault().sendTextMessage(contact.getPhone(), null, "?loc?", null, null);
+                Toast.makeText(context, "Wysłano ?loc? do " + contact.getPhone(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -70,7 +74,11 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
     }
 
      public void AddItem(String numer){
-        contactList.add(new Contact("", numer));
+        AddItem("", numer);
+     }
+
+     public void AddItem(String name, String numer){
+        contactList.add(new Contact(name, numer));
         this.notifyDataSetChanged();
      }
     public void RemoveItem(int position){

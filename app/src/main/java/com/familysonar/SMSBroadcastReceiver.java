@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.PersistableBundle;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -32,6 +33,7 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
         Log.d("FalimySonarApp", "OnBroadcastReceive");
         if (intent.hasExtra("pdus")) {
             Object[] smsArray = (Object[]) intent.getExtras().get("pdus");
+            String format = intent.getStringExtra("format");
             ConfigData config = new ConfigData(context);
             try {
                 config.Load();
@@ -42,11 +44,11 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
             }
 
             for (int i = 0; i < smsArray.length; i++) {
-                SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsArray[i]);
+                SmsMessage sms = SmsMessage.createFromPdu((byte[]) smsArray[i], format);
                 if (sms.getMessageBody().compareTo("?loc?")!=0) continue;
                 for (Contact c : config.getContactList()) {
                     String from = sms.getOriginatingAddress();
-                    if (sms.getOriginatingAddress().compareTo(c.getPhone())==0) {
+                    if (PhoneNumberUtils.compare(from, c.getPhone())) {
                         //scheduleJob(context, sms);
                         //AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
                         //Intent alarmIntent = new Intent(context,AlarmReceiverClass.class);

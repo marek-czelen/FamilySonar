@@ -101,7 +101,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textColor="@color/design_default_color_primary_dark"
-        android:text="UWAGA !!. Wyłącz oszczędzanie baterii i harmonogram oszczędzania baterii."/>
+        android:text="Ustaw FamilySonar jako aplikację bez ograniczeń. Systemowe oszczędzanie baterii nadal może ograniczać lokalizację."/>
 
     <Button
         android:id="@+id/batteryOptimalizationButton"
@@ -110,7 +110,7 @@
         android:layout_height="40sp"
         android:layout_alignParentRight="true"
         android:gravity="right"
-        android:text="Ustawienia"
+        android:text="Bateria"
         android:theme="@style/Theme.AppCompat.Dialog"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toRightOf="@id/powerSaverInfo"
@@ -186,7 +186,17 @@
         android:layout_gravity="bottom|end"
         android:layout_marginRight="20sp"
         android:layout_marginBottom="20sp"
+        android:contentDescription="Dodaj numer ręcznie"
         android:src="@android:drawable/ic_input_add" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabContacts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginRight="88dp"
+        android:layout_marginBottom="20dp"
+        android:contentDescription="Dodaj numer z kontaktów"
+        android:src="@android:drawable/ic_menu_myplaces" />
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabSOS"
         app:tint="@null"

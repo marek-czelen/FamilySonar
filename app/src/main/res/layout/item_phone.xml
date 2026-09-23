@@ -21,6 +21,7 @@
     android:id="@+id/sendLocalization"
     android:layout_width="45sp"
     android:layout_height="45sp"
+    android:contentDescription="Wyślij testową komendę ?loc?"
     android:src="@drawable/crosshairs_gps"/>
 
 
