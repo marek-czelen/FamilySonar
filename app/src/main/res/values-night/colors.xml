@@ -1,28 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="backgroundColor">#0E1726</color>
-    <color name="backgroundColorPress">#1B2A40</color>
-    <color name="red">#FF8B99</color>
-    <color name="red_press">#FFB1BA</color>
-    <color name="dark_gray">#2B405A</color>
-    <color name="dark_gray_press">#405A78</color>
-    <color name="safe_background">#0E1726</color>
-    <color name="safe_on_background">#EEF4FC</color>
-    <color name="safe_surface">#162336</color>
-    <color name="safe_on_surface">#EEF4FC</color>
-    <color name="safe_muted">#9AAAC0</color>
-    <color name="safe_outline">#2B405A</color>
-    <color name="safe_primary">#7C9BFF</color>
-    <color name="safe_on_primary">#10265E</color>
-    <color name="safe_primary_container">#20396F</color>
-    <color name="safe_on_primary_container">#DCE5FF</color>
-    <color name="safe_secondary">#5ED6C0</color>
-    <color name="safe_on_secondary">#073B34</color>
-    <color name="safe_secondary_container">#17483F</color>
-    <color name="safe_on_secondary_container">#B6F2E6</color>
-    <color name="safe_surface_variant">#1D3047</color>
-    <color name="safe_info_background">#20396F</color>
-    <color name="safe_error_background">#512A35</color>
-    <color name="safe_error">#FFB1BA</color>
-    <color name="ic_launcher_background">#295FEF</color>
+    <!-- FindMe - legacy aliases -->
+    <color name="backgroundColor">#0F1620</color>
+    <color name="backgroundColorPress">#1A2432</color>
+    <color name="red">#FF9BA1</color>
+    <color name="red_press">#FFC0C4</color>
+    <color name="dark_gray">#263243</color>
+    <color name="dark_gray_press">#38485C</color>
+
+    <!-- Neutrals (gray) -->
+    <color name="safe_background">#0F1620</color>
+    <color name="safe_on_background">#E7EDF5</color>
+    <color name="safe_surface">#18212E</color>
+    <color name="safe_on_surface">#E7EDF5</color>
+    <color name="safe_muted">#93A1B5</color>
+    <color name="safe_outline">#2A3646</color>
+    <color name="safe_surface_variant">#1E2938</color>
+
+    <!-- Primary (blue) -->
+    <color name="safe_primary">#7FA6FF</color>
+    <color name="safe_on_primary">#0A2456</color>
+    <color name="safe_primary_container">#21365F</color>
+    <color name="safe_on_primary_container">#D9E4FF</color>
+
+    <!-- Secondary / brand accent (orange) -->
+    <color name="safe_secondary">#FFB27A</color>
+    <color name="safe_on_secondary">#4A2400</color>
+    <color name="safe_secondary_container">#6A3A12</color>
+    <color name="safe_on_secondary_container">#FFE0C7</color>
+
+    <!-- Feedback -->
+    <color name="safe_info_background">#21365F</color>
+    <color name="safe_error">#FFB3B3</color>
+    <color name="safe_error_background">#4E2A2D</color>
+
+    <!-- Launcher -->
+    <color name="ic_launcher_background">#2D6CDF</color>
 </resources>

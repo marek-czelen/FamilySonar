@@ -1,6 +1,6 @@
-# FamilySonar 📍
+# FindMe 📍
 
-FamilySonar is a native Android portfolio prototype for sharing a device location with trusted contacts over SMS. It combines local contact management, runtime permission handling, GPS/network location updates, geocoding, foreground services, and emergency messaging without a custom backend or user account.
+FindMe is a native Android portfolio prototype for sharing a device location with trusted contacts over SMS. It combines local contact management, runtime permission handling, GPS/network location updates, geocoding, foreground services, and emergency messaging without a custom backend or user account.
 
 > **Status:** working portfolio prototype, version `1.0`.
 
@@ -36,7 +36,7 @@ The active application is a single Android module built around one launcher `Act
 
 ## 🏛️ Architecture
 
-FamilySonar uses a small, event-driven native Android architecture rather than a multi-layer or backend-based design:
+FindMe uses a small, event-driven native Android architecture rather than a multi-layer or backend-based design:
 
 | Layer | Responsibility | Main implementation |
 | --- | --- | --- |
@@ -243,4 +243,4 @@ Contributions that improve reliability, privacy, accessibility, or device compat
 
 ### 💼 Portfolio Project
 
-FamilySonar is a practical portfolio project demonstrating native Android development, background execution, runtime permissions, location services, SMS communication, and honest documentation of security and hardware-dependent limitations. It should be treated as a learning and review artifact rather than a production safety service.
+FindMe is a practical portfolio project demonstrating native Android development, background execution, runtime permissions, location services, SMS communication, and honest documentation of security and hardware-dependent limitations. It should be treated as a learning and review artifact rather than a production safety service.

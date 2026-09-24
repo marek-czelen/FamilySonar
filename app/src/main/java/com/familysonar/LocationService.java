@@ -78,10 +78,14 @@ public class LocationService extends Service {
     private static final String CACHE_TIME = "time";
     private static final String CACHE_ACCURACY = "accuracy";
     private static final String CACHE_ADDRESS = "address";
+    private static final String CELL_CACHE_PREFS = "cell_cache";
+    private static final String CELL_CACHE_SAMPLES = "samples";
+    private static final String CELL_CACHE_TIME = "time";
+    private static final long CELL_CACHE_MAX_AGE_MILLIS = 5 * 60 * 1000L;
 
     private long LocationRefreshPeridSeconds = LocationSleepRefreshPeridSeconds;
 
-    String CHANNEL_ID = "FamilySonar.Location";
+    String CHANNEL_ID = "FindMe.Location";
     Location currentLocationGPS = null;
     Location currentLocationNetwork = null;
     LocationListener gpsLocationListener = null;
@@ -461,6 +465,12 @@ public class LocationService extends Service {
         } else {
             smsManager.sendMultipartTextMessage(destination, null, parts, null, null);
         }
+        if (currentLocation != null) {
+            int accuracy = currentLocation.hasAccuracy()
+                    ? Math.round(currentLocation.getAccuracy()) : -1;
+            sendTechnicalLocation(destination, currentLocation.getLatitude(),
+                    currentLocation.getLongitude(), accuracy, currentLocationTime);
+        }
     }
 
     private void requestFastLocation(String destination) {
@@ -507,6 +517,11 @@ public class LocationService extends Service {
             message.append("; adres=").append(address);
         }
         SmsManager.getDefault().sendTextMessage(destination, null, message.toString(), null, null);
+        sendTechnicalLocation(destination,
+                preferences.getFloat(CACHE_LATITUDE, 0f),
+                preferences.getFloat(CACHE_LONGITUDE, 0f),
+                accuracy >= 0f ? Math.round(accuracy) : -1,
+                time);
         cachedLocationSentForRequest = true;
     }
 
@@ -768,6 +783,242 @@ public class LocationService extends Service {
 
     private String signalValue(int dbm) {
         return dbm == Integer.MAX_VALUE ? "?" : String.valueOf(dbm);
+    }
+
+    private void sendTechnicalLocation(String destination, double lat, double lon,
+                                       int accuracy, long time) {
+        if (destination == null || destination.trim().isEmpty()
+                || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        final String target = destination;
+        new Thread(() -> {
+            List<TechnicalLocationSms.Cell> cells = collectCellSamples();
+            String message = TechnicalLocationSms.build(lat, lon, accuracy, time, cells);
+            Log.d("FindMeCells", "Technical SMS -> " + target + " (" + cells.size()
+                    + " cells): " + message);
+            try {
+                SmsManager smsManager = SmsManager.getDefault();
+                ArrayList<String> parts = smsManager.divideMessage(message);
+                if (parts.size() == 1) {
+                    smsManager.sendTextMessage(target, null, message, null, null);
+                } else {
+                    smsManager.sendMultipartTextMessage(target, null, parts, null, null);
+                }
+            } catch (Exception exception) {
+                Log.e("LocationService", "Unable to send technical location SMS", exception);
+            }
+        }).start();
+    }
+
+    private List<TechnicalLocationSms.Cell> collectCellSamples() {
+        List<TechnicalLocationSms.Cell> samples = new ArrayList<>();
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return samples;
+        }
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return samples;
+        }
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        if (telephonyManager == null) {
+            return samples;
+        }
+
+        List<CellInfo> observed = new ArrayList<>();
+        try {
+            List<CellInfo> cached = telephonyManager.getAllCellInfo();
+            if (cached != null) {
+                observed.addAll(cached);
+            }
+        } catch (SecurityException ignored) {
+        }
+
+        // Force a fresh scan so as many visible towers as possible are reported.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                final java.util.concurrent.CountDownLatch latch =
+                        new java.util.concurrent.CountDownLatch(1);
+                final List<CellInfo> fresh = new ArrayList<>();
+                telephonyManager.requestCellInfoUpdate(command -> command.run(),
+                        new TelephonyManager.CellInfoCallback() {
+                            @Override
+                            public void onCellInfo(@NonNull List<CellInfo> cellInfo) {
+                                if (cellInfo != null) {
+                                    fresh.addAll(cellInfo);
+                                }
+                                latch.countDown();
+                            }
+
+                            @Override
+                            public void onError(int errorCode, @Nullable Throwable detail) {
+                                latch.countDown();
+                            }
+                        });
+                latch.await(4, java.util.concurrent.TimeUnit.SECONDS);
+                observed.addAll(fresh);
+            } catch (Throwable ignored) {
+            }
+        }
+
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        Log.d("FindMeCells", "Observed cells (getAllCellInfo + fresh scan) = " + observed.size());
+        for (CellInfo cell : observed) {
+            TechnicalLocationSms.Cell sample = parseCellSample(cell);
+            String described = describeCell(cell);
+            if (described == null) {
+                described = cell.getClass().getSimpleName();
+            }
+            if (sample == null) {
+                Log.d("FindMeCells", "REJECTED (no usable MCC/MNC/LAC/CID): " + described);
+                continue;
+            }
+            if (seen.add(sample.mcc + "_" + sample.mnc + "_" + sample.cid + "_" + sample.lac)) {
+                samples.add(sample);
+                Log.d("FindMeCells", "ACCEPTED mcc=" + sample.mcc + " mnc=" + sample.mnc
+                        + " cid=" + sample.cid + " lac=" + sample.lac
+                        + " dbm=" + sample.dbm + " | " + described);
+            } else {
+                Log.d("FindMeCells", "DUPLICATE mcc=" + sample.mcc + " mnc=" + sample.mnc
+                        + " cid=" + sample.cid + " lac=" + sample.lac);
+            }
+        }
+        if (samples.isEmpty()) {
+            samples.addAll(loadRecentCellSamples());
+            if (!samples.isEmpty()) {
+                Log.w("FindMeCells", "Fresh radio scan had no usable cell; using "
+                        + samples.size() + " recently verified cached cell(s)");
+            }
+        } else {
+            persistCellSamples(samples);
+        }
+        Log.d("FindMeCells", "Usable cells for OpenCellID = " + samples.size());
+        return samples;
+    }
+
+    private void persistCellSamples(List<TechnicalLocationSms.Cell> samples) {
+        StringBuilder encoded = new StringBuilder();
+        for (TechnicalLocationSms.Cell sample : samples) {
+            if (encoded.length() > 0) {
+                encoded.append(';');
+            }
+            encoded.append(sample.mcc).append(',')
+                    .append(sample.mnc).append(',')
+                    .append(sample.cid).append(',')
+                    .append(sample.lac).append(',')
+                    .append(sample.dbm);
+        }
+        getSharedPreferences(CELL_CACHE_PREFS, MODE_PRIVATE)
+                .edit()
+                .putString(CELL_CACHE_SAMPLES, encoded.toString())
+                .putLong(CELL_CACHE_TIME, System.currentTimeMillis())
+                .apply();
+    }
+
+    private List<TechnicalLocationSms.Cell> loadRecentCellSamples() {
+        SharedPreferences prefs = getSharedPreferences(CELL_CACHE_PREFS, MODE_PRIVATE);
+        long cachedAt = prefs.getLong(CELL_CACHE_TIME, 0L);
+        if (cachedAt <= 0L || System.currentTimeMillis() - cachedAt > CELL_CACHE_MAX_AGE_MILLIS) {
+            return new ArrayList<>();
+        }
+
+        List<TechnicalLocationSms.Cell> cached = new ArrayList<>();
+        String encoded = prefs.getString(CELL_CACHE_SAMPLES, "");
+        if (encoded == null || encoded.isEmpty()) {
+            return cached;
+        }
+        for (String record : encoded.split(";")) {
+            String[] fields = record.split(",");
+            if (fields.length != 5) {
+                continue;
+            }
+            try {
+                int mcc = Integer.parseInt(fields[0]);
+                int mnc = Integer.parseInt(fields[1]);
+                long cid = Long.parseLong(fields[2]);
+                int lac = Integer.parseInt(fields[3]);
+                int dbm = Integer.parseInt(fields[4]);
+                if (mcc > 0 && mnc >= 0 && isUsableCid(cid) && isUsableLac(lac)) {
+                    cached.add(new TechnicalLocationSms.Cell(mcc, mnc, cid, lac, dbm));
+                }
+            } catch (NumberFormatException ignored) {
+                // Ignore a malformed cache entry.
+            }
+        }
+        return cached;
+    }
+
+    private TechnicalLocationSms.Cell parseCellSample(CellInfo cell) {
+        int mcc = -1;
+        int mnc = -1;
+        long cid = -1L;
+        int lac = -1;
+        int dbm = Integer.MAX_VALUE;
+        if (cell instanceof CellInfoGsm) {
+            CellInfoGsm info = (CellInfoGsm) cell;
+            mcc = intOf(info.getCellIdentity().getMccString());
+            mnc = intOf(info.getCellIdentity().getMncString());
+            lac = info.getCellIdentity().getLac();
+            cid = info.getCellIdentity().getCid();
+            dbm = info.getCellSignalStrength().getDbm();
+        } else if (cell instanceof CellInfoLte) {
+            CellInfoLte info = (CellInfoLte) cell;
+            mcc = intOf(info.getCellIdentity().getMccString());
+            mnc = intOf(info.getCellIdentity().getMncString());
+            lac = info.getCellIdentity().getTac();
+            cid = info.getCellIdentity().getCi();
+            dbm = info.getCellSignalStrength().getDbm();
+        } else if (cell instanceof CellInfoWcdma) {
+            CellInfoWcdma info = (CellInfoWcdma) cell;
+            mcc = intOf(info.getCellIdentity().getMccString());
+            mnc = intOf(info.getCellIdentity().getMncString());
+            lac = info.getCellIdentity().getLac();
+            cid = info.getCellIdentity().getCid();
+            dbm = info.getCellSignalStrength().getDbm();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                && cell instanceof CellInfoTdscdma) {
+            CellInfoTdscdma info = (CellInfoTdscdma) cell;
+            mcc = intOf(info.getCellIdentity().getMccString());
+            mnc = intOf(info.getCellIdentity().getMncString());
+            lac = info.getCellIdentity().getLac();
+            cid = info.getCellIdentity().getCid();
+            dbm = info.getCellSignalStrength().getDbm();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                && cell instanceof CellInfoNr) {
+            CellInfoNr info = (CellInfoNr) cell;
+            CellIdentityNr identity = (CellIdentityNr) info.getCellIdentity();
+            mcc = intOf(identity.getMccString());
+            mnc = intOf(identity.getMncString());
+            lac = identity.getTac();
+            cid = identity.getNci();
+            dbm = info.getCellSignalStrength().getDbm();
+        }
+        if (mcc <= 0 || mnc < 0 || !isUsableCid(cid) || !isUsableLac(lac)) {
+            return null;
+        }
+        int signal = dbm == Integer.MAX_VALUE ? -120 : dbm;
+        return new TechnicalLocationSms.Cell(mcc, mnc, cid, lac, signal);
+    }
+
+    private int intOf(String value) {
+        try {
+            return value == null ? -1 : Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            return -1;
+        }
+    }
+
+    /** LAC/TAC is valid when it is not the 16-bit (0xFFFF) or int "unavailable" sentinel. */
+    static boolean isUsableLac(int lac) {
+        return lac > 0 && lac != 0xFFFF && lac != Integer.MAX_VALUE;
+    }
+
+    /** CID/CI is valid when it is not the LTE 28-bit (0x0FFFFFFF) or int "unavailable" sentinel. */
+    static boolean isUsableCid(long cid) {
+        return cid > 0 && cid != 0x0FFFFFFFL && cid != Integer.MAX_VALUE;
     }
 
 

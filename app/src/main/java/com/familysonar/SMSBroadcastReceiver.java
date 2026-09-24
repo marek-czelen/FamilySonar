@@ -62,6 +62,13 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
             }
 
             String command = messageBody.toString();
+            if (TechnicalLocationSms.isTechnical(command)) {
+                if (isTrustedContact(from, config)
+                        && LocationInboxStore.saveIncoming(context, from, command)) {
+                    MapNotifier.notifyLocationReceived(context, from, command);
+                }
+                return;
+            }
             boolean emergencyRequest = command.startsWith("?loc?")
                     && EmergencyPasswordStore.matches(context, command.substring(5));
             boolean trustedRequest = "?loc?".equals(command)

@@ -18,7 +18,7 @@ class DeviceStatusHelper {
 
     static String buildStatusMessage(Context context) {
         StringBuilder builder = new StringBuilder();
-        builder.append("Safe Messages\n");
+        builder.append("FindMe\n");
         builder.append("Czas: ")
                 .append(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
                         .format(new Date()))

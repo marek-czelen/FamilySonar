@@ -49,12 +49,12 @@ public class AlarmReceiverClass extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         destination = intent.getStringExtra("from");
         if (destination == null || destination.trim().isEmpty()) {
-            Log.w("FamilySonar", "Location request has no destination number");
+            Log.w("FindMe", "Location request has no destination number");
             return;
         }
 
         PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FamilySonar:LocationRequest");
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FindMe:LocationRequest");
         wakeLock.acquire(LOCATION_TIMEOUT_MILLIS);
         timeoutHandler = new Handler(Looper.getMainLooper());
 
@@ -62,7 +62,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.w("FamilySonar", "Location request cannot run: location permission is missing");
+            Log.w("FindMe", "Location request cannot run: location permission is missing");
             releaseWakeLock();
             return;
         }
@@ -82,7 +82,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
-                        Log.w("FamilySonar", "Last location lookup failed", exception);
+                        Log.w("FindMe", "Last location lookup failed", exception);
                         releaseWakeLock();
                     }
                 });
@@ -95,7 +95,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
         boolean useGps = hasFineLocation && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean useNetwork = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
         if (!useGps && !useNetwork) {
-            Log.w("FamilySonar", "Location request cannot run: no location provider is enabled");
+            Log.w("FindMe", "Location request cannot run: no location provider is enabled");
             releaseWakeLock();
             return;
         }
@@ -123,7 +123,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
             if (locationManager != null && locationListener != null) {
                 locationManager.removeUpdates(locationListener);
             }
-            Log.w("FamilySonar", "Location request timed out");
+            Log.w("FindMe", "Location request timed out");
             releaseWakeLock();
         };
         timeoutHandler.postDelayed(locationTimeout, LOCATION_TIMEOUT_MILLIS);
@@ -132,7 +132,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
             String provider = useGps ? LocationManager.GPS_PROVIDER : LocationManager.NETWORK_PROVIDER;
             locationManager.requestLocationUpdates(provider, 10_000L, 0f, locationListener);
         } catch (SecurityException exception) {
-            Log.w("FamilySonar", "Location request failed because permission was revoked", exception);
+            Log.w("FindMe", "Location request failed because permission was revoked", exception);
             releaseWakeLock();
         }
     }
@@ -143,7 +143,7 @@ public class AlarmReceiverClass extends BroadcastReceiver {
                 location.getLatitude(), location.getLongitude());
         try {
             SmsManager.getDefault().sendTextMessage(destination, null, message, null, null);
-            Log.d("FamilySonar", "Sent requested location");
+            Log.d("FindMe", "Sent requested location");
         } finally {
             releaseWakeLock();
         }

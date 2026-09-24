@@ -43,16 +43,16 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
             @Override
             public void onClick(View view) {
                 if (contact.getPhone() == null || contact.getPhone().trim().isEmpty()) {
-                    Toast.makeText(context, "Brak numeru telefonu.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.no_phone_number, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
                         != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(context, "Brak uprawnienia do wysyłania SMS-ów.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, R.string.sms_permission_missing, Toast.LENGTH_LONG).show();
                     return;
                 }
                 SmsManager.getDefault().sendTextMessage(contact.getPhone(), null, "?loc?", null, null);
-                Toast.makeText(context, "Wysłano ?loc? do " + contact.getPhone(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.loc_sent_to, contact.getPhone()), Toast.LENGTH_SHORT).show();
             }
         });
     }

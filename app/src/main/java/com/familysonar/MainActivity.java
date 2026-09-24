@@ -201,9 +201,9 @@ public class MainActivity extends AppCompatActivity {
                 switch (direction) {
                     case ItemTouchHelper.RIGHT:
                         AlertDialog.Builder confirmationDialog = new AlertDialog.Builder(MainActivity.this);
-                        confirmationDialog.setTitle("Usuwanie kontaktu");
-                        confirmationDialog.setMessage("Czy chesz usunąć ten element?");
-                        confirmationDialog.setPositiveButton("Usuń", new DialogInterface.OnClickListener() {
+                        confirmationDialog.setTitle(R.string.delete_contact_title);
+                        confirmationDialog.setMessage(R.string.delete_contact_message);
+                        confirmationDialog.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 contactAdapter.RemoveItem(viewHolder.getAdapterPosition());
@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         });
-                        confirmationDialog.setNegativeButton("Anuluj", new DialogInterface.OnClickListener() {
+                        confirmationDialog.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 contactAdapter.notifyDataSetChanged();
@@ -268,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                 float scaledSizeInPixels = spSize * getResources().getDisplayMetrics().scaledDensity;
                 textPaint.setTextSize(scaledSizeInPixels);// have this the same as your text size
 
-                String text = "Usuń";
+                String text = getString(R.string.delete);
                 textPaint.getTextBounds(text, 0, text.length(), textBounds);
 
                 int textLeft = iconRigth + textMargin;
@@ -287,16 +287,16 @@ public class MainActivity extends AppCompatActivity {
             try {
                 contactPickerLauncher.launch(pickContact);
             } catch (ActivityNotFoundException exception) {
-                Toast.makeText(MainActivity.this, "Brak aplikacji do wyboru kontaktu.", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, R.string.no_contact_picker, Toast.LENGTH_LONG).show();
             }
         });
 
         findViewById(R.id.sosButton).setOnClickListener(view ->
                 new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Potwierdź SOS")
-                        .setMessage("Czy na pewno wysłać prośbę o pomoc do wszystkich zaufanych kontaktów?")
-                        .setNegativeButton("Anuluj", null)
-                        .setPositiveButton("Wyślij SOS", (dialog, which) -> sendSosMessages())
+                        .setTitle(R.string.sos_confirm_title)
+                        .setMessage(R.string.sos_confirm_message)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.sos_send, (dialog, which) -> sendSosMessages())
                         .show());
 
         StartLocationService();
@@ -304,12 +304,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendSosMessages() {
         if (_configData.getContactList().isEmpty()) {
-            Toast.makeText(this, "Brak zaufanych kontaktów.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.no_trusted_contacts, Toast.LENGTH_LONG).show();
             return;
         }
         if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Brak uprawnienia do lokalizacji.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.location_permission_missing, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
                 LocationServices.getFusedLocationProviderClient(this);
         fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
             if (location == null) {
-                Toast.makeText(this, "Brak dostępnej lokalizacji.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.no_location_available, Toast.LENGTH_LONG).show();
                 return;
             }
             String smsMessage = String.format(
@@ -331,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
                 SmsManager.getDefault().sendTextMessage(
                         contact.getPhone(), null, smsMessage, null, null);
             }
-            Toast.makeText(this, "Wysłano SOS do zaufanych kontaktów.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.sos_sent, Toast.LENGTH_LONG).show();
         });
     }
 
@@ -354,7 +354,7 @@ public class MainActivity extends AppCompatActivity {
         };
         try (Cursor cursor = getContentResolver().query(contactUri, projection, null, null, null)) {
             if (cursor == null || !cursor.moveToFirst()) {
-                Toast.makeText(this, "Nie udało się odczytać wybranego kontaktu.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.contact_read_failed, Toast.LENGTH_LONG).show();
                 return;
             }
             String name = cursor.getString(cursor.getColumnIndexOrThrow(
@@ -362,13 +362,13 @@ public class MainActivity extends AppCompatActivity {
             String phone = cursor.getString(cursor.getColumnIndexOrThrow(
                     ContactsContract.CommonDataKinds.Phone.NUMBER));
             if (phone == null || phone.trim().isEmpty()) {
-                Toast.makeText(this, "Wybrany kontakt nie ma numeru telefonu.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.contact_no_number, Toast.LENGTH_LONG).show();
                 return;
             }
             for (Contact contact : _configData.getContactList()) {
                 if (contact.getPhone() != null
                         && PhoneNumberUtils.compare(contact.getPhone(), phone)) {
-                    Toast.makeText(this, "Ten numer jest już na liście.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.number_already_listed, Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -491,16 +491,16 @@ public class MainActivity extends AppCompatActivity {
     private void PermissionInfo(boolean permissionGranded){
         if (!permissionGranded) {
             TextView view = findViewById(R.id.perissionInfo);
-            view.setText("UWAGA !!. Musisz przyznać wszyskie, żądane przez oplikację upawnienia.");
+            view.setText(R.string.permissions_required_warning);
             view.setTextColor(ContextCompat.getColor(this, R.color.safe_error));
         } else {
             TextView view = findViewById(R.id.perissionInfo);
             if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                     && !hasPhoneStatePermission()) {
-                view.setText("Brak dostępu do telefonu: raport BTS i sieci będzie niepełny.");
+                view.setText(R.string.phone_access_missing);
                 view.setTextColor(ContextCompat.getColor(this, R.color.safe_error));
             } else {
-                view.setText("Przyznano wymagane uprawnienia.");
+                view.setText(R.string.permissions_granted);
                 view.setTextColor(ContextCompat.getColor(this, R.color.safe_secondary));
             }
         }

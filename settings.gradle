@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FamilySonar"
+rootProject.name = "FindMe"
 include ':app'

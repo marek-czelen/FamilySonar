@@ -12,7 +12,7 @@ import android.telephony.SmsManager;
 import android.util.Log;
 
 public class MmsBroadcastReceiver extends BroadcastReceiver {
-    private static final String TAG = "FamilySonarMms";
+    private static final String TAG = "FindMeMms";
     static final String ACTION_MMS_DOWNLOAD_COMPLETE =
             "com.familysonar.action.MMS_DOWNLOAD_COMPLETE";
 

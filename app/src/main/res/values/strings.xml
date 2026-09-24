@@ -1,11 +1,109 @@
 <resources>
-    <string name="app_name">FamilySonar</string>
-    <string name="action_settings">Ustawienia</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <string name="app_name" translatable="false">FindMe</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- Screen headers and descriptions -->
+    <string name="main_subtitle">Emergency phone &amp; person location</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Manage battery, permissions and protection</string>
+
+    <!-- Location card -->
+    <string name="last_measurement">LAST MEASUREMENT</string>
+    <string name="no_data">no data</string>
+    <string name="address_placeholder">The address will appear once the location is available</string>
+
+    <!-- Main actions -->
+    <string name="sos_button">SOS — I need help</string>
+    <string name="trusted_contacts">Trusted contacts</string>
+
+    <!-- Battery / permission cards -->
+    <string name="battery_hint">Check the battery settings so background location keeps working.</string>
+    <string name="battery_button">Battery</string>
+    <string name="permission_checking">Checking permissions…</string>
+    <string name="permission_button">Permissions</string>
+
+    <!-- Emergency password -->
+    <string name="emergency_location_title">Emergency location</string>
+    <string name="emergency_location_desc">Any phone can send ?loc?password. Use a strong, secret password.</string>
+    <string name="emergency_password_hint">Emergency password</string>
+    <string name="emergency_password_not_set">Password is not set</string>
+    <string name="emergency_password_active">Password is active</string>
+    <string name="emergency_password_saved">Emergency password saved.</string>
+    <string name="emergency_password_removed">Emergency password removed.</string>
+    <string name="emergency_password_requirements">The password must be 6–64 characters and contain no spaces.</string>
+
+    <!-- Common buttons -->
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">Add</string>
+    <string name="open_settings">Open settings</string>
+
+    <!-- Remove-contact dialog -->
+    <string name="delete_contact_title">Remove contact</string>
+    <string name="delete_contact_message">Do you want to remove this item?</string>
+
+    <!-- SOS dialog -->
+    <string name="sos_confirm_title">Confirm SOS</string>
+    <string name="sos_confirm_message">Are you sure you want to send a help request to all trusted contacts?</string>
+    <string name="sos_send">Send SOS</string>
+
+    <!-- Background location dialog -->
+    <string name="background_location_title">Background location</string>
+    <string name="background_location_message">To share your location after the screen is locked, choose “Allow all the time” in the app location settings.</string>
+
+    <!-- Toast and status messages -->
+    <string name="no_contact_picker">No app available to pick a contact.</string>
+    <string name="no_trusted_contacts">No trusted contacts.</string>
+    <string name="location_permission_missing">Location permission is missing.</string>
+    <string name="no_location_available">No location available.</string>
+    <string name="sos_sent">SOS sent to trusted contacts.</string>
+    <string name="contact_read_failed">Could not read the selected contact.</string>
+    <string name="contact_no_number">The selected contact has no phone number.</string>
+    <string name="number_already_listed">This number is already on the list.</string>
+    <string name="no_phone_number">No phone number.</string>
+    <string name="sms_permission_missing">Missing permission to send SMS.</string>
+    <string name="loc_sent_to">Sent ?loc? to %1$s</string>
+
+    <!-- Permission info banner -->
+    <string name="permissions_required_warning">You must grant all permissions requested by the app.</string>
+    <string name="phone_access_missing">No phone access: the cell and network report will be incomplete.</string>
+    <string name="permissions_granted">Required permissions granted.</string>
+    <string name="all_permissions_granted">All requested permissions granted.</string>
+
+    <!-- Contact row / add-number dialog -->
+    <string name="send_test_loc">Send a test ?loc? command</string>
+    <string name="phone_number_hint">Phone number</string>
+
+    <!-- Received location / map -->
+    <string name="location_received_channel">Received locations</string>
+    <string name="location_received_title">Location received</string>
+    <string name="location_received_text">%1$s shared their location</string>
+    <string name="map_title">Location</string>
+    <string name="map_gps_label">GPS location</string>
+    <string name="map_bts_label">Approx. (cell towers)</string>
+    <string name="map_gps_accuracy">GPS accuracy: %1$d m</string>
+    <string name="map_confidence">Confidence radius: %1$d m</string>
+    <string name="map_pin_gps_details">Location type: GPS coordinates\nMeasurement uncertainty: ±%1$d m</string>
+    <string name="map_pin_bts_details">Location type: cell-tower estimate\nConfidence radius: ±%1$d m\nLocated cell towers: %2$d</string>
+    <string name="map_no_location">No location data in the message.</string>
+    <string name="map_no_opencellid_key">Add an OpenCellID API key in settings to estimate the location from cell towers.</string>
+    <string name="map_bts_unavailable">Cell-tower estimate unavailable.</string>
+
+    <!-- OpenCellID settings -->
+    <string name="opencellid_title">OpenCellID API key</string>
+    <string name="opencellid_desc">Used to estimate a contact\'s location from cell towers.</string>
+    <string name="opencellid_hint">API key</string>
+    <string name="opencellid_saved">OpenCellID key saved.</string>
+    <string name="opencellid_removed">OpenCellID key removed.</string>
+    <string name="opencellid_key_set">Key is set</string>
+    <string name="opencellid_key_not_set">Key is not set</string>
+
+    <!-- Navigation template (unused) -->
+    <string name="first_fragment_label" translatable="false">First Fragment</string>
+    <string name="second_fragment_label" translatable="false">Second Fragment</string>
+    <string name="next" translatable="false">Next</string>
+    <string name="previous" translatable="false">Previous</string>
     <string name="unknown_sender">Unknown sender</string>
     <string name="attachment_selected">Attachment selected</string>
     <string name="sms_mode">SMS</string>
@@ -18,7 +116,7 @@
     <string name="message_hint">Type a message</string>
     <string name="send_message">Send message</string>
     <string name="add_contact">Add contact</string>
-    <string name="sos_button_description">Send emergency message</string>
+    <string name="sos_button_description">Send an emergency help request</string>
     <string name="messages_channel">Messages</string>
     <string name="incoming_mms">Incoming MMS</string>
     <string name="mms_download_size_limit">The MMS is too large to download.</string>
@@ -27,7 +125,7 @@
     <string name="mms_download_missing_location">The MMS download did not provide a valid location.</string>
     <string name="mms_download_failed">The MMS download failed.</string>
     <string name="default_sms_title">Default SMS app required</string>
-    <string name="default_sms_required">Set FamilySonar as the default SMS app to send and receive messages.</string>
+    <string name="default_sms_required">Set FindMe as the default SMS app to send and receive messages.</string>
     <string name="open_default_sms_settings">Open SMS settings</string>
     <string name="default_sms_permission_missing">SMS permission is missing.</string>
     <string name="address_required">A phone number and message are required.</string>

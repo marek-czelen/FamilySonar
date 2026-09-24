@@ -21,7 +21,7 @@
             android:layout_height="52dp"
             android:contentDescription="@string/app_name"
             android:scaleType="centerInside"
-            android:src="@drawable/logo_item"
+            android:src="@drawable/logo_findme"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -30,7 +30,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
-            android:text="Safe Messages"
+            android:text="FindMe"
             android:textColor="@color/safe_on_background"
             android:textSize="22sp"
             android:textStyle="bold"
@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
             android:layout_marginTop="2dp"
-            android:text="Bezpieczne wiadomości i lokalizacja"
+            android:text="@string/main_subtitle"
             android:textColor="@color/safe_muted"
             android:textSize="14sp"
             app:layout_constraintEnd_toStartOf="@id/settingsButton"
@@ -93,7 +93,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="OSTATNI POMIAR"
+                        android:text="@string/last_measurement"
                         android:textColor="@color/safe_muted"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -102,7 +102,7 @@
                         android:id="@+id/locationTimeout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="brak danych"
+                        android:text="@string/no_data"
                         android:textColor="@color/safe_muted"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -129,7 +129,7 @@
                     android:layout_marginTop="12dp"
                     android:ellipsize="end"
                     android:maxLines="2"
-                    android:text="Adres zostanie pokazany po uzyskaniu lokalizacji"
+                    android:text="@string/address_placeholder"
                     android:textColor="@color/safe_muted"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -141,7 +141,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:minHeight="54dp"
-            android:text="SOS — potrzebuję pomocy"
+            android:text="@string/sos_button"
             android:textAllCaps="false"
             android:textColor="@color/safe_on_primary"
             android:textSize="15sp"
@@ -182,7 +182,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Sprawdź ustawienia baterii, aby usługa lokalizacji działała w tle."
+                    android:text="@string/battery_hint"
                     android:textColor="@color/safe_on_surface"
                     android:textSize="13sp" />
 
@@ -192,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:minHeight="44dp"
-                    android:text="Bateria"
+                    android:text="@string/battery_button"
                     android:textAllCaps="false"
                     android:textColor="@color/safe_on_primary_container"
                     app:backgroundTint="@color/safe_primary_container"
@@ -227,7 +227,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Sprawdzanie uprawnień..."
+                    android:text="@string/permission_checking"
                     android:textColor="@color/safe_on_surface"
                     android:textSize="13sp" />
 
@@ -237,7 +237,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:minHeight="44dp"
-                    android:text="Uprawnienia"
+                    android:text="@string/permission_button"
                     android:textAllCaps="false"
                     android:textColor="@color/safe_on_primary"
                     app:backgroundTint="@color/safe_primary"
@@ -250,7 +250,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Zaufane kontakty"
+            android:text="@string/trusted_contacts"
             android:textColor="@color/safe_on_background"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -280,8 +280,8 @@
         android:layout_marginBottom="20dp"
         android:contentDescription="@string/add_contact"
         android:src="@android:drawable/ic_input_add"
-        android:tint="@color/safe_on_primary"
-        app:backgroundTint="@color/safe_primary"
+        android:tint="@color/safe_on_secondary"
+        app:backgroundTint="@color/safe_secondary"
         app:borderWidth="0dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

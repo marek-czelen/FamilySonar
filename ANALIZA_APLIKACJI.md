@@ -1,12 +1,12 @@
-# Analiza aplikacji Safe Messages
+# Analiza aplikacji FindMe
 
 **Data aktualizacji:** 2026-09-22 (aktualizacja: tlo MMS, skalowanie ~300 KB, GIF/Glide, kontakty, insety, ikona)  
 **Zakres:** moduł `app`, manifest, zasoby XML, kod Java, dokumentacja oraz walidacja Gradle.  
-**Nazwa aplikacji:** Safe Messages.
+**Nazwa aplikacji:** FindMe.
 
 ## Podsumowanie
 
-Repozytorium zostało przebudowane z lokalizatora FamilySonar w aplikację **Safe Messages**: natywnego klienta SMS/MMS w Javie i XML, który może pełnić rolę domyślnej aplikacji SMS. Jednocześnie zachowano kluczową funkcję bezpieczeństwa: automatyczną odpowiedź lokalizacją na dokładną komendę SMS `?loc?` od zaufanego numeru.
+Repozytorium zostało przebudowane z lokalizatora FamilySonar w aplikację **FindMe**: natywnego klienta SMS/MMS w Javie i XML, który może pełnić rolę domyślnej aplikacji SMS. Jednocześnie zachowano kluczową funkcję bezpieczeństwa: automatyczną odpowiedź lokalizacją na dokładną komendę SMS `?loc?` od zaufanego numeru.
 
 ## Zaimplementowany zakres
 
@@ -32,7 +32,7 @@ Aktualizacja (wersja z tlem MMS/GIF/kontakty):
 - Komenda `?status?` odsyła zaufanemu kontaktowi operatora, poziom baterii i stan ładowania. Gdy `?loc?` nie może działać z powodu braku lokalizacji w tle, aplikacja odsyła jasną informację o konieczności wyboru „Zawsze zezwalaj”.
 - Użytkownik może ustawić awaryjne hasło lokalizacji. Dokładna komenda `?loc?hasło` jest wtedy akceptowana z dowolnego numeru, a odpowiedź trafia na numer nadawcy. Przechowywany jest wyłącznie skrót SHA-256 hasła; zwykłe `?loc?` nadal wymaga zaufanego kontaktu.
 - Lista rozmów obsługuje archiwizację gestem; w widoku archiwum ten sam gest uruchamia potwierdzone trwałe usunięcie wiadomości.
-- Dodano ikonę wektorową Safe Messages łączącą tarczę i dymek wiadomości.
+- Dodano wektorową ikonę FindMe: pomarańczową pinezkę lokalizacji z sygnałem „sonaru".
 
 ## SMS/MMS/RCS
 

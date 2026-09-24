@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_settings">Ustawienia</string>
+
+    <!-- Nagłówki i opisy ekranów -->
+    <string name="main_subtitle">Awaryjna lokalizacja telefonu i osoby</string>
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_subtitle">Zarządzaj baterią, uprawnieniami i ochroną</string>
+
+    <!-- Karta lokalizacji -->
+    <string name="last_measurement">OSTATNI POMIAR</string>
+    <string name="no_data">brak danych</string>
+    <string name="address_placeholder">Adres zostanie pokazany po uzyskaniu lokalizacji</string>
+
+    <!-- Główne akcje -->
+    <string name="sos_button">SOS — potrzebuję pomocy</string>
+    <string name="trusted_contacts">Zaufane kontakty</string>
+
+    <!-- Karty baterii / uprawnień -->
+    <string name="battery_hint">Sprawdź ustawienia baterii, aby usługa lokalizacji działała w tle.</string>
+    <string name="battery_button">Bateria</string>
+    <string name="permission_checking">Sprawdzanie uprawnień…</string>
+    <string name="permission_button">Uprawnienia</string>
+
+    <!-- Hasło awaryjne -->
+    <string name="emergency_location_title">Awaryjna lokalizacja</string>
+    <string name="emergency_location_desc">Dowolny telefon może wysłać ?loc?hasło. Używaj silnego, tajnego hasła.</string>
+    <string name="emergency_password_hint">Hasło awaryjne</string>
+    <string name="emergency_password_not_set">Hasło nie jest ustawione</string>
+    <string name="emergency_password_active">Hasło jest aktywne</string>
+    <string name="emergency_password_saved">Hasło awaryjne zostało zapisane.</string>
+    <string name="emergency_password_removed">Hasło awaryjne zostało usunięte.</string>
+    <string name="emergency_password_requirements">Hasło musi mieć 6–64 znaki i nie może zawierać spacji.</string>
+
+    <!-- Przyciski wspólne -->
+    <string name="save">Zapisz</string>
+    <string name="delete">Usuń</string>
+    <string name="cancel">Anuluj</string>
+    <string name="add">Dodaj</string>
+    <string name="open_settings">Otwórz ustawienia</string>
+
+    <!-- Dialog usuwania kontaktu -->
+    <string name="delete_contact_title">Usuwanie kontaktu</string>
+    <string name="delete_contact_message">Czy chcesz usunąć ten element?</string>
+
+    <!-- Dialog SOS -->
+    <string name="sos_confirm_title">Potwierdź SOS</string>
+    <string name="sos_confirm_message">Czy na pewno wysłać prośbę o pomoc do wszystkich zaufanych kontaktów?</string>
+    <string name="sos_send">Wyślij SOS</string>
+
+    <!-- Dialog lokalizacji w tle -->
+    <string name="background_location_title">Lokalizacja w tle</string>
+    <string name="background_location_message">Aby udostępniać lokalizację po zablokowaniu ekranu, wybierz w ustawieniach aplikacji opcję „Zawsze zezwalaj”.</string>
+
+    <!-- Komunikaty Toast i statusy -->
+    <string name="no_contact_picker">Brak aplikacji do wyboru kontaktu.</string>
+    <string name="no_trusted_contacts">Brak zaufanych kontaktów.</string>
+    <string name="location_permission_missing">Brak uprawnienia do lokalizacji.</string>
+    <string name="no_location_available">Brak dostępnej lokalizacji.</string>
+    <string name="sos_sent">Wysłano SOS do zaufanych kontaktów.</string>
+    <string name="contact_read_failed">Nie udało się odczytać wybranego kontaktu.</string>
+    <string name="contact_no_number">Wybrany kontakt nie ma numeru telefonu.</string>
+    <string name="number_already_listed">Ten numer jest już na liście.</string>
+    <string name="no_phone_number">Brak numeru telefonu.</string>
+    <string name="sms_permission_missing">Brak uprawnienia do wysyłania SMS-ów.</string>
+    <string name="loc_sent_to">Wysłano ?loc? do %1$s</string>
+
+    <!-- Baner informacji o uprawnieniach -->
+    <string name="permissions_required_warning">Musisz przyznać wszystkie uprawnienia wymagane przez aplikację.</string>
+    <string name="phone_access_missing">Brak dostępu do telefonu: raport BTS i sieci będzie niepełny.</string>
+    <string name="permissions_granted">Przyznano wymagane uprawnienia.</string>
+    <string name="all_permissions_granted">Przyznano wszystkie żądane uprawnienia.</string>
+
+    <!-- Wiersz kontaktu / dialog dodawania numeru -->
+    <string name="send_test_loc">Wyślij testową komendę ?loc?</string>
+    <string name="phone_number_hint">Numer telefonu</string>
+
+    <!-- Odebrana lokalizacja / mapa -->
+    <string name="location_received_channel">Odebrane lokalizacje</string>
+    <string name="location_received_title">Otrzymano lokalizację</string>
+    <string name="location_received_text">%1$s udostępnił(a) lokalizację</string>
+    <string name="map_title">Lokalizacja</string>
+    <string name="map_gps_label">Lokalizacja GPS</string>
+    <string name="map_bts_label">Przybliżona (BTS)</string>
+    <string name="map_gps_accuracy">Dokładność GPS: %1$d m</string>
+    <string name="map_confidence">Promień ufności: %1$d m</string>
+    <string name="map_pin_gps_details">Typ lokalizacji: współrzędne GPS\nNiepewność pomiaru: ±%1$d m</string>
+    <string name="map_pin_bts_details">Typ lokalizacji: szacowanie z BTS\nPromień ufności: ±%1$d m\nZlokalizowane maszty BTS: %2$d</string>
+    <string name="map_no_location">Wiadomość nie zawiera danych lokalizacji.</string>
+    <string name="map_no_opencellid_key">Dodaj klucz API OpenCellID w ustawieniach, aby oszacować lokalizację na podstawie masztów BTS.</string>
+    <string name="map_bts_unavailable">Szacowanie z masztów BTS jest niedostępne.</string>
+
+    <!-- Ustawienia OpenCellID -->
+    <string name="opencellid_title">Klucz API OpenCellID</string>
+    <string name="opencellid_desc">Służy do szacowania lokalizacji kontaktu na podstawie masztów BTS.</string>
+    <string name="opencellid_hint">Klucz API</string>
+    <string name="opencellid_saved">Zapisano klucz OpenCellID.</string>
+    <string name="opencellid_removed">Usunięto klucz OpenCellID.</string>
+    <string name="opencellid_key_set">Klucz jest ustawiony</string>
+    <string name="opencellid_key_not_set">Klucz nie jest ustawiony</string>
+
+    <!-- Nagłówek SOS (opis dostępności) -->
+    <string name="sos_button_description">Wyślij awaryjną prośbę o pomoc</string>
+
+    <!-- Funkcje roli domyślnej aplikacji SMS / lokalizacja -->
+    <string name="unknown_sender">Nieznany nadawca</string>
+    <string name="attachment_selected">Wybrano załącznik</string>
+    <string name="sms_mode">SMS</string>
+    <string name="mms_limited_title">Załączniki MMS</string>
+    <string name="mms_limited_message">Ta aplikacja obsługuje wysyłanie załączników obrazkowych jako MMS. Dostępność i limity zależą od operatora i urządzenia.</string>
+    <string name="sms_mms_scope_banner">Obsługiwane są wiadomości SMS oraz obrazkowe załączniki MMS.</string>
+    <string name="back">Wstecz</string>
+    <string name="emoji_button">Emoji</string>
+    <string name="attachment_button">Dodaj załącznik obrazkowy</string>
+    <string name="message_hint">Napisz wiadomość</string>
+    <string name="send_message">Wyślij wiadomość</string>
+    <string name="add_contact">Dodaj kontakt</string>
+    <string name="messages_channel">Wiadomości</string>
+    <string name="incoming_mms">Przychodzący MMS</string>
+    <string name="mms_download_size_limit">MMS jest zbyt duży, aby go pobrać.</string>
+    <string name="mms_download_network_failed">Pobieranie MMS nie powiodło się z powodu problemu z siecią.</string>
+    <string name="mms_download_not_supported">To urządzenie nie obsługuje pobierania MMS.</string>
+    <string name="mms_download_missing_location">Pobieranie MMS nie zawierało prawidłowej lokalizacji.</string>
+    <string name="mms_download_failed">Pobieranie MMS nie powiodło się.</string>
+    <string name="default_sms_title">Wymagana domyślna aplikacja SMS</string>
+    <string name="default_sms_required">Ustaw FindMe jako domyślną aplikację SMS, aby wysyłać i odbierać wiadomości.</string>
+    <string name="open_default_sms_settings">Otwórz ustawienia SMS</string>
+    <string name="default_sms_permission_missing">Brak uprawnienia SMS.</string>
+    <string name="address_required">Wymagany jest numer telefonu i wiadomość.</string>
+    <string name="mms_send_failed">Nie udało się wysłać MMS.</string>
+    <string name="mms_image_only">Jako MMS można wysyłać tylko załączniki obrazkowe.</string>
+    <string name="mms_attachment_too_large">Załącznik obrazkowy jest zbyt duży.</string>
+    <string name="mms_attachment_read_failed">Nie udało się odczytać załącznika obrazkowego.</string>
+    <string name="location_permission_required">Wymagane jest uprawnienie do lokalizacji.</string>
+    <string name="location_request_failed">Żądanie lokalizacji nie powiodło się.</string>
+    <string name="choose_contact_from_phonebook">Wybierz z książki telefonicznej</string>
+    <string name="enter_phone_number">Wpisz numer telefonu</string>
+    <string name="choose_contact">Dodaj zaufany kontakt</string>
+    <string name="contact_not_selected">Nie wybrano kontaktu.</string>
+    <string name="invalid_phone_number">Wpisz prawidłowy numer telefonu.</string>
+    <string name="contact_saved">Zapisano kontakt.</string>
+    <string name="contact_save_failed">Nie udało się zapisać kontaktu.</string>
+</resources>

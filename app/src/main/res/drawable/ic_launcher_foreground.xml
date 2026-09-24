@@ -4,18 +4,24 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Shield -->
+    <!-- Sonar signal rings -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeAlpha="0.22"
+        android:fillColor="#00000000"
+        android:pathData="M18,46a36,36 0 1,1 72,0a36,36 0 1,1 -72,0Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeAlpha="0.38"
+        android:fillColor="#00000000"
+        android:pathData="M28,46a26,26 0 1,1 52,0a26,26 0 1,1 -52,0Z" />
+    <!-- Location pin -->
+    <path
+        android:fillColor="#F97316"
+        android:pathData="M54,27C43.5,27 35,35.5 35,46C35,60 54,84 54,84C54,84 73,60 73,46C73,35.5 64.5,27 54,27Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,24L80,33V54C80,70 69,82 54,87C39,82 28,70 28,54V33L54,24Z" />
-    <path
-        android:fillColor="#1A73E8"
-        android:pathData="M54,29L75,36V54C75,67 66,77 54,82C42,77 33,67 33,54V36L54,29Z" />
-    <!-- Speech bubble -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,44C42,42 43,41 45,41H63C66,41 68,43 68,46V54C68,57 66,59 63,59H55L48,66V59H45C43,59 42,57 42,55V44Z" />
-    <path
-        android:fillColor="#34A853"
-        android:pathData="M46,47H64V50H46Z M46,52H58V55H46Z" />
+        android:pathData="M46.5,45a7.5,7.5 0 1,1 15,0a7.5,7.5 0 1,1 -15,0Z" />
 </vector>

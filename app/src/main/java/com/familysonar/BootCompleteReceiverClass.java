@@ -23,7 +23,7 @@ public class BootCompleteReceiverClass extends BroadcastReceiver {
         if (!hasLocationPermission
                 || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
                 && context.checkSelfPermission(ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
-            Log.w("FamilySonar", "Location service not started after boot: background location permission is missing");
+            Log.w("FindMe", "Location service not started after boot: background location permission is missing");
             return;
         }
         Intent locationServiceIntent = new Intent(context, LocationService.class);

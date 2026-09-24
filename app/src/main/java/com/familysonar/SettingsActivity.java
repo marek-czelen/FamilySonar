@@ -210,7 +210,7 @@ public class SettingsActivity extends AppCompatActivity {
                         showManualContactDialog();
                     }
                 })
-                .setNegativeButton("Anuluj", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -222,9 +222,9 @@ public class SettingsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setTitle(R.string.enter_phone_number)
-                .setPositiveButton("Dodaj", (dialog, which) ->
+                .setPositiveButton(R.string.add, (dialog, which) ->
                         addContact("", editedField.getText().toString()))
-                .setNegativeButton("Anuluj", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -269,7 +269,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
         for (Contact contact : _configData.getContactList()) {
             if (contact.matchesPhone(phone)) {
-                Toast.makeText(this, "Ten numer jest już na liście.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.number_already_listed, Toast.LENGTH_LONG).show();
                 return;
             }
         }
@@ -282,7 +282,7 @@ public class SettingsActivity extends AppCompatActivity {
             _configData.Save();
             Toast.makeText(this, R.string.contact_saved, Toast.LENGTH_SHORT).show();
         } catch (IOException | ClassNotFoundException exception) {
-            Log.e("FamilySonar", "Unable to save contacts", exception);
+            Log.e("FindMe", "Unable to save contacts", exception);
             Toast.makeText(this, R.string.contact_save_failed, Toast.LENGTH_LONG).show();
         }
     }
@@ -311,14 +311,14 @@ public class SettingsActivity extends AppCompatActivity {
                     ? ""
                     : passwordInput.getText().toString();
             if (!EmergencyPasswordStore.isValid(password)) {
-                passwordInput.setError("Hasło musi mieć 6-64 znaków i nie może zawierać spacji.");
+                passwordInput.setError(getString(R.string.emergency_password_requirements));
                 return;
             }
             EmergencyPasswordStore.save(this, password);
             passwordInput.setText("");
             passwordInput.setError(null);
             updateEmergencyPasswordStatus(passwordStatus);
-            Toast.makeText(this, "Hasło awaryjne zostało zapisane.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.emergency_password_saved, Toast.LENGTH_LONG).show();
         });
 
         findViewById(R.id.clearEmergencyPasswordButton).setOnClickListener(view -> {
@@ -326,16 +326,16 @@ public class SettingsActivity extends AppCompatActivity {
             passwordInput.setText("");
             passwordInput.setError(null);
             updateEmergencyPasswordStatus(passwordStatus);
-            Toast.makeText(this, "Hasło awaryjne zostało usunięte.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.emergency_password_removed, Toast.LENGTH_LONG).show();
         });
     }
 
     private void updateEmergencyPasswordStatus(TextView statusView) {
         if (EmergencyPasswordStore.isConfigured(this)) {
-            statusView.setText("Hasło jest aktywne");
+            statusView.setText(R.string.emergency_password_active);
             statusView.setTextColor(ContextCompat.getColor(this, R.color.safe_secondary));
         } else {
-            statusView.setText("Hasło nie jest ustawione");
+            statusView.setText(R.string.emergency_password_not_set);
             statusView.setTextColor(ContextCompat.getColor(this, R.color.safe_muted));
         }
     }
@@ -438,7 +438,7 @@ public class SettingsActivity extends AppCompatActivity {
                             Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS);
                     startActivity(settingsIntent);
                 })
-                .setNegativeButton("Anuluj", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
@@ -466,16 +466,16 @@ public class SettingsActivity extends AppCompatActivity {
                 && ContextCompat.checkSelfPermission(this, ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             currentPermissionRequest = PermissionRequest.BACKGROUND_LOCATION;
             new AlertDialog.Builder(this)
-                    .setTitle("Lokalizacja w tle")
-                    .setMessage("Aby odpowiadać na SMS-y po zablokowaniu ekranu, wybierz w ustawieniach aplikacji lokalizację „Zawsze zezwalaj”.")
-                    .setPositiveButton("Otwórz ustawienia", (dialog, which) -> {
+                    .setTitle(R.string.background_location_title)
+                    .setMessage(R.string.background_location_message)
+                    .setPositiveButton(R.string.open_settings, (dialog, which) -> {
                         backgroundLocationSettingsOpened = true;
                         Intent settingsIntent = new Intent(
                                 Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 Uri.parse("package:" + getPackageName()));
                         startActivity(settingsIntent);
                     })
-                    .setNegativeButton("Anuluj", null)
+                    .setNegativeButton(R.string.cancel, null)
                     .show();
         }
     }
@@ -501,12 +501,12 @@ public class SettingsActivity extends AppCompatActivity {
             if (!isDefaultSmsApp()) {
                 view.setText(R.string.default_sms_required);
             } else {
-                view.setText("UWAGA !!. Musisz przyznać wszyskie, żądane przez oplikację upawnienia.");
+                view.setText(R.string.permissions_required_warning);
             }
             view.setTextColor(ContextCompat.getColor(this, R.color.safe_error));
         } else {
             TextView view = findViewById(R.id.perissionInfo);
-            view.setText("Przyznano wszystkie żądane uprawnienia.");
+            view.setText(R.string.all_permissions_granted);
             view.setTextColor(ContextCompat.getColor(this, R.color.safe_secondary));
         }
 

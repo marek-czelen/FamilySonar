@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.FamilySonar" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.FindMe" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/safe_primary</item>
         <item name="colorOnPrimary">@color/safe_on_primary</item>
         <item name="colorPrimaryContainer">@color/safe_primary_container</item>
@@ -14,6 +14,6 @@
         <item name="colorSurfaceVariant">@color/safe_surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/safe_muted</item>
         <item name="colorOutline">@color/safe_outline</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">sans-serif</item>
     </style>
 </resources>

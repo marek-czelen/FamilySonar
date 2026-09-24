@@ -40,7 +40,7 @@
                 android:layout_marginStart="8dp"
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerInside"
-                android:src="@drawable/logo_item"
+                android:src="@drawable/logo_findme"
                 app:layout_constraintStart_toEndOf="@id/backButton"
                 app:layout_constraintTop_toTopOf="@id/backButton" />
 
@@ -49,7 +49,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
-                android:text="Ustawienia"
+                android:text="@string/settings_title"
                 android:textColor="@color/safe_on_background"
                 android:textSize="22sp"
                 android:textStyle="bold"
@@ -63,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="14dp"
                 android:layout_marginTop="2dp"
-                android:text="Zarządzaj baterią, uprawnieniami i ochroną"
+                android:text="@string/settings_subtitle"
                 android:textColor="@color/safe_muted"
                 android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -96,7 +96,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Sprawdź ustawienia baterii, aby usługa lokalizacji działała w tle."
+                        android:text="@string/battery_hint"
                         android:textColor="@color/safe_on_surface"
                         android:textSize="14sp" />
 
@@ -106,7 +106,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:minHeight="44dp"
-                        android:text="Bateria"
+                        android:text="@string/battery_button"
                         android:textAllCaps="false"
                         android:textColor="@color/safe_on_primary_container"
                         app:backgroundTint="@color/safe_primary_container"
@@ -140,7 +140,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Sprawdzanie uprawnień..."
+                        android:text="@string/permission_checking"
                         android:textColor="@color/safe_on_surface"
                         android:textSize="14sp" />
 
@@ -150,7 +150,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:minHeight="44dp"
-                        android:text="Uprawnienia"
+                        android:text="@string/permission_button"
                         android:textAllCaps="false"
                         android:textColor="@color/safe_on_primary"
                         app:backgroundTint="@color/safe_primary"
@@ -181,7 +181,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Awaryjna lokalizacja"
+                        android:text="@string/emergency_location_title"
                         android:textColor="@color/safe_error"
                         android:textSize="17sp"
                         android:textStyle="bold" />
@@ -190,7 +190,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Dowolny telefon może wysłać ?loc?hasło. Używaj silnego, tajnego hasła."
+                        android:text="@string/emergency_location_desc"
                         android:textColor="@color/safe_on_surface"
                         android:textSize="13sp" />
 
@@ -198,7 +198,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="Hasło awaryjne"
+                        android:hint="@string/emergency_password_hint"
                         app:boxBackgroundMode="outline"
                         app:boxCornerRadiusBottomEnd="14dp"
                         app:boxCornerRadiusBottomStart="14dp"
@@ -227,7 +227,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Hasło nie jest ustawione"
+                            android:text="@string/emergency_password_not_set"
                             android:textColor="@color/safe_muted"
                             android:textSize="12sp" />
 
@@ -237,7 +237,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
                             android:minHeight="42dp"
-                            android:text="Usuń"
+                            android:text="@string/delete"
                             android:textAllCaps="false"
                             android:textColor="@color/safe_error"
                             app:backgroundTint="@android:color/transparent"
@@ -251,7 +251,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
                             android:minHeight="42dp"
-                            android:text="Zapisz"
+                            android:text="@string/save"
                             android:textAllCaps="false"
                             android:textColor="@color/safe_on_primary"
                             app:backgroundTint="@color/safe_primary"
