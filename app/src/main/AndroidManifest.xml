@@ -79,6 +79,10 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.FindMe" />
         <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FindMe" />
+        <activity
             android:name=".MapActivity"
             android:exported="false"
             android:theme="@style/Theme.FindMe" />

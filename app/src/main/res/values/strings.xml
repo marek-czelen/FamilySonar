@@ -2,6 +2,31 @@
     <string name="app_name" translatable="false">FindMe</string>
     <string name="action_settings">Settings</string>
 
+    <!-- First-run onboarding / SMS information and consent -->
+    <string name="onboarding_indicator">%1$d of %2$d</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_agree">I understand and agree</string>
+    <string name="onboarding_disagree">Disagree</string>
+    <string name="onboarding_decline_title">Consent required</string>
+    <string name="onboarding_decline_message">FindMe cannot work without your consent to send and receive SMS and use your location for these safety features. Without consent the app cannot be used and will be removed.</string>
+    <string name="onboarding_decline_uninstall">Uninstall</string>
+
+    <string name="onboarding_purpose_title">Welcome to FindMe</string>
+    <string name="onboarding_purpose_body">FindMe is a personal safety app that shares your location with people you trust during an emergency.\n\nAdd your trusted contacts before you need help. In a critical moment you can send an SOS with your location, or a trusted contact can request your location for you.</string>
+
+    <string name="onboarding_sms_title">How FindMe uses SMS</string>
+    <string name="onboarding_sms_body">FindMe sends and receives location information using text messages (SMS).\n\nSMS is used by design so the app keeps working when Wi-Fi and mobile data are unavailable and only a cellular (GSM) signal is present.</string>
+    <string name="onboarding_sms_when_title">When SMS is sent or received</string>
+    <string name="onboarding_sms_when_body">• When you press SOS, FindMe sends your location by SMS to every trusted contact.\n• When you request a contact\'s location, FindMe sends a \"?loc?\" command by SMS.\n• When a trusted contact sends the exact \"?loc?\" command to you, FindMe receives that SMS in the background and replies with your location.\n• Standard SMS charges from your carrier may apply.</string>
+
+    <string name="onboarding_emergency_title">Help when you can\'t reach your phone</string>
+    <string name="onboarding_emergency_body">If you are incapacitated, unconscious, or cannot use your phone, a trusted contact can request your last known location by sending an SMS.\n\nTo answer these requests while the screen is locked, FindMe needs background location access and runs a foreground service with a visible notification. This lets a trusted person locate you quickly instead of waiting for a slow external procedure.</string>
+
+    <string name="onboarding_privacy_title">Your data and important limits</string>
+    <string name="onboarding_privacy_body">• Trusted contacts and settings are stored only on this device. FindMe has no account and no server.\n• Your location is sent by SMS only to trusted contacts, or, if you set an emergency password, to the sender of a valid request.\n• SMS is not encrypted and delivery depends on your carrier.\n• FindMe needs a mobile (GSM) signal and cannot locate a phone that is switched off.\n• FindMe is a safety aid and does not replace emergency services.</string>
+    <string name="onboarding_consent_note">By continuing, you agree that FindMe may send and receive SMS and use your location to provide these safety features.</string>
+
     <!-- Screen headers and descriptions -->
     <string name="main_subtitle">Emergency phone &amp; person location</string>
     <string name="settings_title">Settings</string>

@@ -86,6 +86,9 @@ public class MainActivity extends AppCompatActivity {
             SEND_SMS
         };
 
+        private static final String PREFS_ONBOARDING = OnboardingActivity.PREFS_ONBOARDING;
+        private static final String KEY_SMS_CONSENT = OnboardingActivity.KEY_SMS_CONSENT;
+
         private static final String[] PHONE_PERMISSIONS = {
             READ_PHONE_STATE
         };
@@ -120,6 +123,15 @@ public class MainActivity extends AppCompatActivity {
                 addContactFromPicker(result.getData().getData());
             });
 
+    private final ActivityResultLauncher<Intent> onboardingLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (hasCompletedOnboarding()) {
+                    beginPermissionFlow();
+                } else {
+                    finish();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,6 +151,10 @@ public class MainActivity extends AppCompatActivity {
         checkPermissionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (!hasCompletedOnboarding()) {
+                    onboardingLauncher.launch(new Intent(MainActivity.this, OnboardingActivity.class));
+                    return;
+                }
                 if (!checkPermission()) {
                     PermissionInfo(false);
                     requestPermission();
@@ -164,13 +180,11 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.settingsButton).setOnClickListener(
                 view -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
 
-        //check permission
-        if (!checkPermission()) {
-            PermissionInfo(false);
-            requestPermission();
+        //first-run SMS information and consent, then permissions
+        if (hasCompletedOnboarding()) {
+            beginPermissionFlow();
         } else {
-            PermissionInfo(true);
-            requestPhoneStatePermission();
+            onboardingLauncher.launch(new Intent(this, OnboardingActivity.class));
         }
 
 
@@ -385,9 +399,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private boolean hasCompletedOnboarding() {
+        return getSharedPreferences(PREFS_ONBOARDING, MODE_PRIVATE)
+                .getBoolean(KEY_SMS_CONSENT, false);
+    }
+
+    private void beginPermissionFlow() {
+        if (!checkPermission()) {
+            PermissionInfo(false);
+            requestPermission();
+        } else {
+            PermissionInfo(true);
+            requestPhoneStatePermission();
+        }
+    }
+
     private boolean checkPermission() {
-        return hasPermissions(SMS_PERMISSIONS)
-                && hasPermissions(LOCATION_PERMISSIONS)
+        return hasPermissions(SMS_PERMISSIONS)                && hasPermissions(LOCATION_PERMISSIONS)
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                 || ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
                 && (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q

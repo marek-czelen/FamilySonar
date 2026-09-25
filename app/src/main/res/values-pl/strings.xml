@@ -2,6 +2,31 @@
 <resources>
     <string name="action_settings">Ustawienia</string>
 
+    <!-- Pierwsze uruchomienie / informacje o SMS i zgoda -->
+    <string name="onboarding_indicator">%1$d z %2$d</string>
+    <string name="onboarding_back">Wstecz</string>
+    <string name="onboarding_next">Dalej</string>
+    <string name="onboarding_agree">Rozumiem i zgadzam się</string>
+    <string name="onboarding_disagree">Nie zgadzam się</string>
+    <string name="onboarding_decline_title">Wymagana zgoda</string>
+    <string name="onboarding_decline_message">FindMe nie może działać bez Twojej zgody na wysyłanie i odbieranie SMS-ów oraz używanie lokalizacji do tych funkcji bezpieczeństwa. Bez zgody aplikacji nie można używać i zostanie ona usunięta.</string>
+    <string name="onboarding_decline_uninstall">Odinstaluj</string>
+
+    <string name="onboarding_purpose_title">Witaj w FindMe</string>
+    <string name="onboarding_purpose_body">FindMe to aplikacja bezpieczeństwa osobistego, która w sytuacji awaryjnej udostępnia Twoją lokalizację zaufanym osobom.\n\nDodaj zaufane kontakty, zanim będziesz potrzebować pomocy. W krytycznym momencie możesz wysłać SOS z lokalizacją, albo zaufany kontakt może poprosić o Twoją lokalizację.</string>
+
+    <string name="onboarding_sms_title">Jak FindMe używa SMS</string>
+    <string name="onboarding_sms_body">FindMe wysyła i odbiera informacje o lokalizacji za pomocą wiadomości SMS.\n\nSMS jest używany celowo, aby aplikacja działała nawet gdy nie ma Wi-Fi ani internetu mobilnego, a dostępny jest tylko zasięg sieci komórkowej (GSM).</string>
+    <string name="onboarding_sms_when_title">Kiedy SMS jest wysyłany lub odbierany</string>
+    <string name="onboarding_sms_when_body">• Po naciśnięciu SOS FindMe wysyła Twoją lokalizację SMS-em do każdego zaufanego kontaktu.\n• Gdy prosisz o lokalizację kontaktu, FindMe wysyła SMS-em komendę \"?loc?\".\n• Gdy zaufany kontakt wyśle do Ciebie dokładnie komendę \"?loc?\", FindMe odbiera ten SMS w tle i odsyła Twoją lokalizację.\n• Mogą obowiązywać standardowe opłaty operatora za SMS.</string>
+
+    <string name="onboarding_emergency_title">Pomoc, gdy nie możesz sięgnąć po telefon</string>
+    <string name="onboarding_emergency_body">Jeśli jesteś niezdolny do działania, nieprzytomny lub nie możesz obsłużyć telefonu, zaufany kontakt może poprosić o Twoją ostatnią znaną lokalizację, wysyłając SMS.\n\nAby odpowiadać na takie prośby przy zablokowanym ekranie, FindMe potrzebuje dostępu do lokalizacji w tle i uruchamia usługę pierwszoplanową z widocznym powiadomieniem. Dzięki temu zaufana osoba może szybko Cię zlokalizować, zamiast czekać na wolną procedurę zewnętrzną.</string>
+
+    <string name="onboarding_privacy_title">Twoje dane i ważne ograniczenia</string>
+    <string name="onboarding_privacy_body">• Zaufane kontakty i ustawienia są przechowywane wyłącznie na tym urządzeniu. FindMe nie ma konta ani serwera.\n• Twoja lokalizacja jest wysyłana SMS-em tylko do zaufanych kontaktów lub, jeśli ustawisz hasło awaryjne, do nadawcy prawidłowej prośby.\n• SMS nie jest szyfrowany, a jego dostarczenie zależy od operatora.\n• FindMe wymaga zasięgu sieci komórkowej (GSM) i nie zlokalizuje wyłączonego telefonu.\n• FindMe jest narzędziem wspomagającym bezpieczeństwo i nie zastępuje służb ratunkowych.</string>
+    <string name="onboarding_consent_note">Kontynuując, zgadzasz się, że FindMe może wysyłać i odbierać SMS-y oraz używać Twojej lokalizacji, aby udostępniać te funkcje bezpieczeństwa.</string>
+
     <!-- Nagłówki i opisy ekranów -->
     <string name="main_subtitle">Awaryjna lokalizacja telefonu i osoby</string>
     <string name="settings_title">Ustawienia</string>

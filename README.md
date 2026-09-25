@@ -10,6 +10,35 @@ The application stores trusted phone numbers locally. A user can send an SOS mes
 
 The active application is a single Android module built around one launcher `Activity`, system `BroadcastReceiver` components, a foreground `Service`, and local file storage. SMS delivery, carrier availability, device permissions, and location-provider state remain external dependencies.
 
+## 🆘 Safety purpose and offline operating model
+
+FindMe is intended to support location sharing in situations where a person cannot reliably use the phone interface:
+
+- the user can send an SOS containing their current or last known location to trusted contacts;
+- a trusted contact can request the user's location by sending the exact `?loc?` SMS command;
+- the request can be handled while the device is locked or unattended, so a trusted person can request the last stored location when the user is incapacitated, has lost access to the phone, or cannot operate it;
+- the communication channel is SMS by design because the application must remain useful when Wi-Fi and ordinary internet access are unavailable.
+
+This design addresses time-critical situations in which waiting for an operator or another service to obtain a device location may be too slow. It is not a replacement for emergency services, carrier location procedures, medical care, or a guaranteed tracking service. The user must configure trusted contacts and grant the required permissions before an emergency occurs.
+
+### What works without Wi-Fi
+
+The application does not need Wi-Fi or mobile data to obtain a GPS fix or exchange the core SOS/location messages. SMS still requires the device to be registered on a mobile operator's network.
+
+| Device condition | Expected behavior |
+| --- | --- |
+| Wi-Fi unavailable, GSM signal available | GPS and SMS SOS/location requests can work. |
+| Wi-Fi and mobile data unavailable, GSM signal available | SMS and GPS can still work; network geocoding and OpenCellID lookups may be unavailable. |
+| GPS unavailable but GSM signal available | The app can send a persisted last location, if one exists; a new precise fix may not be possible. |
+| No mobile operator signal | SMS cannot be sent or received. The application cannot bypass this carrier limitation. |
+| Device powered off, SIM removed, or radio disabled | Background SMS handling and location sharing cannot operate. |
+
+The app sends coordinates and, when available, a geocoded address through the carrier's SMS service. SMS is not end-to-end encrypted. Only numbers explicitly added as trusted contacts should be configured to receive automatic location responses.
+
+### First-run information and consent
+
+On the first launch, before any SMS or location permission is requested, FindMe shows a short set of informational screens (`OnboardingActivity`). They explain, in the device language, why the app uses SMS, when messages are sent or received, how a trusted contact can request the location when the user cannot, and the privacy limits of the SMS channel. On the final screen the user must choose **I understand and agree** or **Disagree**. Accepting records consent locally in `SharedPreferences` (`findme_onboarding` / `sms_consent_v1`) and starts the permission flow. Choosing **Disagree** confirms that the app cannot work without consent, opens the Android uninstall screen, and closes the app; no consent is stored and the app cannot be used. Backing out of onboarding without consent also closes the app. All onboarding text is provided in English (`values/strings.xml`) and Polish (`values-pl/strings.xml`).
+
 ## 🧰 Used Technologies
 
 <p align="left">
@@ -53,6 +82,7 @@ The repository contains one `app` module. The main screen is implemented directl
 | Module | Role |
 | --- | --- |
 | [`MainActivity`](app/src/main/java/com/familysonar/MainActivity.java) | Initializes the UI, loads contacts, manages runtime permissions, handles contact changes, opens battery settings, refreshes displayed location data, and sends SOS messages. |
+| [`OnboardingActivity`](app/src/main/java/com/familysonar/OnboardingActivity.java) | Shows the first-run bilingual SMS/location information screens and records the user's consent before the permission flow starts. |
 | [`LocationService`](app/src/main/java/com/familysonar/LocationService.java) | Runs as a location foreground service, reads GPS/network updates, maintains the current fix, geocodes the location, notifies the Activity, and sends authorized request responses. |
 | [`SMSBroadcastReceiver`](app/src/main/java/com/familysonar/SMSBroadcastReceiver.java) | Reads incoming SMS PDUs, matches the exact `?loc?` command and sender number, then starts a short fast-refresh request. |
 | [`AlarmReceiverClass`](app/src/main/java/com/familysonar/AlarmReceiverClass.java) | Handles the manual contact-list request, sends a `START` message, and returns the last or next available location coordinate. |
@@ -99,6 +129,70 @@ When an emergency password is configured, the exact `?loc?password` command is a
 - A contact-row action schedules `AlarmReceiverClass`, which sends `START` and then sends one coordinate response using the fused last location or a provider update.
 - The SOS action reads the fused last location and sends one emergency SMS to each saved contact.
 - There is no public HTTP API, application server, external database, or account system in this repository.
+
+## 📲 Google Play publication guide
+
+This section documents the intended use of the sensitive permissions and provides a reproducible review path for a Google Play submission. It is guidance for the Play Console declaration and reviewer notes, not a guarantee of approval. Google Play may change its policy or request additional evidence.
+
+### Core-functionality explanation for the SMS permissions
+
+FindMe requests `SEND_SMS` and `RECEIVE_SMS` because its core safety workflow depends on direct carrier SMS:
+
+> FindMe is a personal safety application for sending and requesting a device location through SMS when Wi-Fi, mobile data, or internet services are unavailable. The user explicitly configures trusted contacts. The user can send an SOS location message to those contacts. A trusted contact can send the exact `?loc?` command, and the application receives that SMS in the background, verifies the sender against the locally stored trusted-contact list, and sends the last known or newly obtained location back by SMS. Without `SEND_SMS` and `RECEIVE_SMS`, the defining safety workflow cannot operate on a cellular connection without internet access.
+
+Use this explanation as the starting point for the SMS permissions declaration. Select the closest available Google Play category for physical safety or emergency alerts and describe the exact user-visible workflow. Do not describe FindMe as a general-purpose messaging application. The application does not use SMS permissions for advertising, analytics, marketing, contact harvesting, or unrelated messaging.
+
+The declaration must also state the limitations:
+
+- SMS requires a working SIM and mobile operator signal;
+- the app cannot locate a powered-off device or bypass a disabled radio;
+- location responses are sent only to trusted contacts or to the sender of a configured emergency-password request;
+- SMS delivery is carrier-dependent and is not guaranteed;
+- the app does not contact emergency services automatically.
+
+If Google Play does not approve the SMS exception, the current offline SMS workflow cannot be published unchanged through Google Play. An alternative Play build would need to remove automatic SMS reception/sending, or the application would need to satisfy the requirements for a full default SMS handler. Granting a permission manually in Android settings does not bypass Google Play's restricted-permission policy.
+
+### Background-location explanation
+
+FindMe requests background location because a trusted contact may need to obtain a location while the user is not actively using the application. The foreground service maintains a visible notification, keeps a persisted last location, and performs a short refresh after an authorized SMS request. The app should show a prominent disclosure before requesting background location, for example:
+
+> FindMe collects location data while the app is not visible so it can respond to an authorized location request from a trusted contact and send an SOS location through SMS. Location is used only for this safety feature and is sent to the configured recipient by SMS.
+
+The disclosure must be shown in the application before the Android permission prompt, and the Play Console background-location declaration must match the actual implementation. Do not state that the app can provide a location when the device has no carrier signal or is powered off.
+
+### Reviewer test instructions
+
+Provide these instructions in the Play Console reviewer notes, together with a dedicated test number or two test devices if Google requests them. Do not publish private phone numbers or secrets in this README.
+
+1. Use two physical, SIM-enabled Android devices. Device A has FindMe installed; device B is the trusted contact.
+2. Launch FindMe on device A and read the first-run information screens describing the SMS usage; accept the final screen to give consent, then grant SMS, precise location, background-location, notification, and any other permissions shown by the app.
+3. Add device B's number to **Trusted contacts** and wait for a GPS fix.
+4. Turn off Wi-Fi and mobile data on device A while leaving the cellular radio and GSM service enabled.
+5. Press the SOS action on device A and confirm that the location SMS is received on device B.
+6. From device B, send exactly `?loc?` to device A. Device A should verify the sender and return the stored location, followed by a fresher location when one is available.
+7. Lock device A's screen and repeat the request from device B to verify the background receiver and foreground location service.
+8. Send `?loc?` from an untrusted number. Device A must not disclose a location.
+9. Re-enable Wi-Fi or mobile data to verify optional address geocoding and OpenCellID behavior.
+
+The reviewer should be told that a test using Wi-Fi only, a device without a SIM, an emulator without telephony support, or a device with no carrier signal cannot exercise the core SMS workflow. If a live two-device review is not available, provide a short screen recording showing the same flow and explain the physical-device requirement.
+
+### Play Console and release checklist
+
+Before submitting a production release:
+
+- raise `targetSdk` to the Android API level currently required by Google Play; the repository currently targets API 34 and must be updated for a 2026 submission;
+- build and upload a signed Android App Bundle (`.aab`), not the debug APK;
+- replace the debug signing key with a protected production keystore and enable Play App Signing;
+- increment `versionCode` for every uploaded release;
+- host a public privacy-policy URL that explains local storage, trusted contacts, precise/background location, SMS transmission, carrier limitations, geocoding, OpenCellID, backups, and data deletion;
+- complete the Data safety form consistently with the production build and disclose that location and phone numbers may be transmitted to recipients selected by the user through SMS;
+- complete the SMS and background-location declarations and attach the prominent-disclosure screenshots or video requested by Play Console;
+- remove manifest permissions that are not required by the production build, including `USE_FULL_SCREEN_INTENT` if it is not used for an eligible notification category;
+- verify that the store listing does not promise operation without a mobile signal, guaranteed delivery, guaranteed location accuracy, or automatic emergency-service response;
+- test on physical devices with Android 9/API 28 or newer, including Wi-Fi disabled, mobile data disabled, locked screen, reboot, denied permissions, missing GPS, and missing carrier service;
+- document the app as a safety aid rather than a certified emergency-response system.
+
+The release configuration currently uses the debug signing configuration and is therefore not ready for Play production publication. The repository also documents known storage and SMS-authentication limitations in [Security Considerations](#-security-considerations); these should be reviewed and addressed before presenting the app as a production safety product.
 
 ## 🛠️ Technology Stack
 
