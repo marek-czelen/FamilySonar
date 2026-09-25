@@ -2,6 +2,15 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def resolvedStoreFile = System.getenv("SIGNING_STORE_FILE") ?: keystoreProperties['storeFile']
+def hasReleaseSigning = resolvedStoreFile != null && resolvedStoreFile != ""
+
 android {
     namespace 'com.familysonar'
     compileSdk 36
@@ -17,11 +26,22 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(resolvedStoreFile)
+                storePassword System.getenv("SIGNING_STORE_PASSWORD") ?: keystoreProperties['storePassword']
+                keyAlias System.getenv("SIGNING_KEY_ALIAS") ?: keystoreProperties['keyAlias']
+                keyPassword System.getenv("SIGNING_KEY_PASSWORD") ?: keystoreProperties['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
         }
     }
 
